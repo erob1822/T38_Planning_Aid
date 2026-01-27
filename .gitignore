@@ -1,0 +1,30 @@
+T38_Airports.txt
+T38_masterdict.xlsx
+Evan Test Code/KML_Testbed_SlimCode.py
+Evan Test Code/JASU_Testbed.py
+DATA/apt_data/APT_RWY.csv
+DATA/apt_data/APT_RWY_END.csv
+DATA/apt_data/APT_BASE.csv
+DATA/afd/CS_SW_20260122.pdf
+DATA/afd/CS_SE_20260122.pdf
+DATA/afd/CS_SC_20260122.pdf
+DATA/afd/CS_PAC_20260122.pdf
+DATA/afd/CS_NW_20260122.pdf
+DATA/afd/CS_NE_20260122.pdf
+DATA/afd/CS_NC_20260122.pdf
+DATA/afd/CS_EC_20260122.pdf
+DATA/afd/CS_AK_20260122.pdf
+DATA/jasu_data.csv
+DATA/fuel_data.csv
+DATA/flights_data.csv
+DATA/comments_data.csv
+Alecs Code/utils.py
+Alecs Code/temp.py
+Alecs Code/T38_PlanAid.py
+Alecs Code/requirements.txt
+Alecs Code/KML_Generator.py
+Alecs Code/JASU_Finder.py
+Alecs Code/Data_Downloader.py
+Alecs Code/API_Scraper.py
+__pycache__/Data_Acquisition.cpython-314.pyc
+__pycache__/KML_Generator.cpython-314.pyc
