@@ -37,6 +37,7 @@ import requests
 import urllib3
 from requests.adapters import HTTPAdapter
 from urllib3.util import Retry
+from tqdm import tqdm
 
 # Optional NTLM auth - graceful degradation if not available
 try:
@@ -213,20 +214,18 @@ class DataAcquisition:
             with tempfile.TemporaryDirectory() as tmpdir:
                 zip_path = Path(tmpdir) / "nasr_data.zip"
                 
-                print("  Downloading NASR data...")
+                nasr_desc = "Downloading FAA National Airspace System Resources (NASR) dataset"
                 response = self.session.get(download_url, stream=True, timeout=120)
                 response.raise_for_status()
-                
                 total_size = int(response.headers.get('content-length', 0))
-                downloaded = 0
-                
-                with open(zip_path, 'wb') as f:
-                    for chunk in response.iter_content(chunk_size=8192):
+                chunk_size = 8192
+                with open(zip_path, 'wb') as f, tqdm(
+                    total=total_size if total_size > 0 else None,
+                    unit='B', unit_scale=True, desc=nasr_desc
+                ) as pbar:
+                    for chunk in response.iter_content(chunk_size=chunk_size):
                         f.write(chunk)
-                        downloaded += len(chunk)
-                        if total_size > 0:
-                            print(self._progress_bar(downloaded, total_size), end='', flush=True)
-                print()
+                        pbar.update(len(chunk))
                 
                 extract_dir = Path(tmpdir) / "extracted"
                 with zipfile.ZipFile(zip_path, 'r') as zf:
@@ -320,20 +319,18 @@ class DataAcquisition:
             with tempfile.TemporaryDirectory() as tmpdir:
                 zip_path = Path(tmpdir) / "dcs_data.zip"
                 
-                print("  Downloading DCS data (~200MB)...")
+                dcs_desc = "Downloading FAA Digital Chart Supplement (DCS) dataset (~200MB)"
                 response = self.session.get(download_url, stream=True, timeout=300)
                 response.raise_for_status()
-                
                 total_size = int(response.headers.get('content-length', 0))
-                downloaded = 0
-                
-                with open(zip_path, 'wb') as f:
-                    for chunk in response.iter_content(chunk_size=8192):
+                chunk_size = 8192
+                with open(zip_path, 'wb') as f, tqdm(
+                    total=total_size if total_size > 0 else None,
+                    unit='B', unit_scale=True, desc=dcs_desc
+                ) as pbar:
+                    for chunk in response.iter_content(chunk_size=chunk_size):
                         f.write(chunk)
-                        downloaded += len(chunk)
-                        if total_size > 0:
-                            print(self._progress_bar(downloaded, total_size), end='', flush=True)
-                print()
+                        pbar.update(len(chunk))
                 
                 extract_dir = Path(tmpdir) / "extracted"
                 with zipfile.ZipFile(zip_path, 'r') as zf:
@@ -434,23 +431,18 @@ class DataAcquisition:
                 # Fall back to all PDFs if naming pattern doesn't match
                 pdf_files = [f for f in afd_dir.iterdir() if f.suffix.lower() == '.pdf']
             
-            print("  Parsing JASU from PDFs...")
+            from tqdm import tqdm
+            print("  Downloading and parsing FAA Pubs for ICAOs with JASUs...")
             jasu_airports = set()
-            
             # Parallel processing for speed
             with ThreadPoolExecutor() as executor:
                 futures = {executor.submit(process_pdf, pdf): pdf for pdf in pdf_files}
-                completed = 0
                 total = len(pdf_files)
-                for future in as_completed(futures):
-                    result = future.result()
-                    jasu_airports.update(result)
-                    completed += 1
-                    pct = int(100 * completed / total)
-                    bar_len = 50
-                    filled = int(bar_len * completed / total)
-                    print(f"\r  [{'=' * filled}{' ' * (bar_len - filled)}] {pct}%", end='', flush=True)
-            print()
+                with tqdm(total=total, desc="JASU Parsing", unit="pdf") as pbar:
+                    for future in as_completed(futures):
+                        result = future.result()
+                        jasu_airports.update(result)
+                        pbar.update(1)
             
             # Save to CSV
             jasu_path = self.data_dir / "jasu_data.csv"

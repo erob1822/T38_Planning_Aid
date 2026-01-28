@@ -36,6 +36,7 @@ def main():
         sys.executable, "-m", "PyInstaller",
         "--onefile",                    # Single .exe file
         "--name", "T38_PlanAid",        # Output name
+        "--distpath", "T38 PlanAid Distribution",  # Output folder
         "--hidden-import=fitz",         # PyMuPDF
         "--hidden-import=pandas",
         "--hidden-import=openpyxl",
@@ -52,20 +53,10 @@ def main():
     result = subprocess.run(cmd, cwd=Path(__file__).parent)
     
     if result.returncode == 0:
-        # Rename dist folder to "T38 PlanAid Distribution"
-        dist_folder = Path("dist")
         distribution_folder = Path("T38 PlanAid Distribution")
-        
-        # Remove existing distribution folder if it exists
-        if distribution_folder.exists():
-            shutil.rmtree(distribution_folder)
-        
-        # Rename dist to the new name
-        dist_folder.rename(distribution_folder)
-        
         exe_path = distribution_folder / "T38_PlanAid.exe"
-        
-        # Copy wb_list.xlsx to the distribution folder
+
+        # Copy wb_list.xlsx to the distribution folder, so the exe is always accompanied by it.
         wb_list_src = Path("wb_list.xlsx")
         wb_list_dst = distribution_folder / "wb_list.xlsx"
         if wb_list_src.exists():
@@ -73,13 +64,12 @@ def main():
             print(f"Copied wb_list.xlsx to distribution folder")
         else:
             print(f"Warning: wb_list.xlsx not found in source directory")
-        
         print(f"\nBuild successful!")
         print(f"Executable: {exe_path.absolute()}")
         print(f"\nDistribution folder ready: {distribution_folder.absolute()}")
         print(f"Contents:")
-        print(f"  - {exe_path.name}")
-        print(f"  - wb_list.xlsx")
+        for item in distribution_folder.iterdir():
+            print(f"  - {item.name}")
         print(f"  (KML_Output folder will be created on first run)")
     else:
         print(f"\nBuild failed with code {result.returncode}")
