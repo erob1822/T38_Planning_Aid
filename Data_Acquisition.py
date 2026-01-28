@@ -21,20 +21,24 @@ USAGE (from master script):
     Data_Acquisition.run(cfg)
 """
 
-import os
-import traceback
-import zipfile
+# Standard library imports
+import re
+import shutil
 import tempfile
-from pathlib import Path
+import zipfile
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime, timedelta
-from typing import Optional, Dict, Any
+from pathlib import Path
+from typing import Dict
 
+# Third-party imports
+import pandas
 import requests
+import urllib3
 from requests.adapters import HTTPAdapter
 from urllib3.util import Retry
-import pandas
 
-# Optional imports - graceful degradation if not available
+# Optional NTLM auth - graceful degradation if not available
 try:
     from requests_ntlm import HttpNtlmAuth
     HAS_NTLM = True
@@ -42,14 +46,12 @@ except ImportError:
     HAS_NTLM = False
 
 # Suppress SSL warnings
-import urllib3
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 
 class DataAcquisition:
     """
     Data acquisition using cfg object from T38_PlanAid.py.
-    Mirrors Alec's architecture - all URLs come from cfg.
     """
     
     def __init__(self, cfg):
@@ -154,7 +156,7 @@ class DataAcquisition:
             
             return True
             
-        except Exception as e:
+        except Exception:
             return False
     
     # AOD COMMENTS - uses cfg.aod_comments_url
@@ -176,12 +178,12 @@ class DataAcquisition:
             gs_df.to_csv(comments_path, index=False)
             return True
             
-        except Exception as e:
+        except Exception:
             return False
     
     # FAA NASR DATA - uses cfg.nasr_file_finder
     
-    def download_nasr(self, force: bool = False) -> bool:
+    def download_nasr(self) -> bool:
         """
         Download FAA NASR data (Airport, Runway, Runway End data).
         
@@ -196,9 +198,6 @@ class DataAcquisition:
             True if successful
         """
         required_files = ['APT_BASE.csv', 'APT_RWY.csv', 'APT_RWY_END.csv']
-        
-        if not force and all((self.apt_data_dir / f).exists() for f in required_files):
-            return True
         
         try:
             api_url = self.cfg.nasr_file_finder
@@ -249,18 +248,18 @@ class DataAcquisition:
                         if matches:
                             src = matches[0]
                             dst = self.apt_data_dir / csv_file
-                            df = pandas.read_csv(src, low_memory=False)
-                            df.to_csv(dst, index=False)
+                            # Direct copy is faster than read_csv/to_csv
+                            shutil.copy(src, dst)
                             break
             
             return True
             
-        except Exception as e:
+        except Exception:
             return False
     
     # DLA CONTRACT FUEL - uses cfg.dla_fuel_check and cfg.dla_fuel_download
     
-    def download_fuel(self, force: bool = False) -> bool:
+    def download_fuel(self) -> bool:
         """
         Download contract fuel data from DLA.
         
@@ -274,14 +273,11 @@ class DataAcquisition:
         """
         fuel_path = self.data_dir / "fuel_data.csv"
         
-        if not force and fuel_path.exists():
-            return True
-        
         try:
             check_url = self.cfg.dla_fuel_check
             download_url = self.cfg.dla_fuel_download
             
-            response = self.session.get(check_url, verify=False, timeout=30)
+            self.session.get(check_url, verify=False, timeout=30)
             response = self.session.get(download_url, verify=False, timeout=60)
             response.raise_for_status()
             
@@ -290,19 +286,12 @@ class DataAcquisition:
             
             return True
             
-        except Exception as e:
-            # Try backup
-            backup = Path("Alecs Code") / "DATA" / "fuel_data.csv"
-            if backup.exists():
-                import shutil
-                shutil.copy(backup, fuel_path)
-                return True
-            
+        except Exception:
             return False
     
     # FAA DCS (Digital Chart Supplement) - uses cfg.dcs_file_finder
     
-    def download_dcs(self, force: bool = False) -> bool:
+    def download_dcs(self) -> bool:
         """
         Download FAA DCS (Digital Chart Supplement) PDFs.
         These contain A/FD airport info including JASU references.
@@ -316,10 +305,6 @@ class DataAcquisition:
             True if successful
         """
         afd_dir = self.data_dir / "afd"
-        
-        # Check if we already have PDFs
-        if not force and afd_dir.exists() and any(afd_dir.glob("*.pdf")):
-            return True
         
         try:
             api_url = self.cfg.dcs_file_finder
@@ -362,12 +347,11 @@ class DataAcquisition:
                 
                 for pdf in pdf_files:
                     dst = afd_dir / pdf.name
-                    import shutil
                     shutil.copy(pdf, dst)
             
             return True
             
-        except Exception as e:
+        except Exception:
             return False
     
     # JASU FINDER - parses DCS PDFs for JASU references
@@ -388,13 +372,7 @@ class DataAcquisition:
         except ImportError:
             return False
         
-        import re
-        from concurrent.futures import ThreadPoolExecutor, as_completed
-        
         afd_dir = self.data_dir / "afd"
-        
-        if not afd_dir.exists() or not any(afd_dir.glob("*.pdf")):
-            return False
         
         def extract_icao_jasu_from_text(text: str) -> list:
             """
@@ -483,15 +461,13 @@ class DataAcquisition:
             
             return True
             
-        except Exception as e:
+        except Exception:
             return False
     
     # MAIN EXECUTION
     
-    def run_all(self, force: bool = False) -> Dict[str, bool]:
-        """Run all data acquisition tasks with parallel downloads where possible."""
-        from concurrent.futures import ThreadPoolExecutor, as_completed
-        
+    def run_all(self):
+        """Run all data acquisition tasks."""
         results = {}
         
         # PHASE 1: Parallel downloads for small/fast API calls
@@ -499,7 +475,7 @@ class DataAcquisition:
         parallel_tasks = {
             'flights': self.download_flights,
             'comments': self.download_comments,
-            'fuel': lambda: self.download_fuel(force=force),
+            'fuel': self.download_fuel,
         }
         
         with ThreadPoolExecutor(max_workers=3) as executor:
@@ -508,15 +484,15 @@ class DataAcquisition:
                 name = futures[future]
                 try:
                     results[name] = future.result()
-                except Exception as e:
+                except Exception:
                     results[name] = False
         
         # PHASE 2: Large sequential downloads
         print("Fetching FAA airport/runway data...")
-        results['nasr'] = self.download_nasr(force=force)
+        results['nasr'] = self.download_nasr()
         
         print("Fetching FAA Chart Supplement...")
-        results['dcs'] = self.download_dcs(force=force)
+        results['dcs'] = self.download_dcs()
         
         # PHASE 3: Parse JASU (depends on DCS)
         results['jasu'] = self.parse_jasu()
@@ -526,18 +502,14 @@ class DataAcquisition:
 
 # MODULE-LEVEL FUNCTION (called by master script)
 
-def run(cfg) -> Dict[str, bool]:
+def run(cfg):
     """
     Main entry point - called by T38_PlanAid.py master script.
     
     Args:
         cfg: AppConfig object containing all API URLs and paths
-        
-    Returns:
-        Dict mapping source name to success status
     """
     da = DataAcquisition(cfg)
-    results = da.run_all(force=cfg.force_download)
+    da.run_all()
     
     print("Data acquisition complete!")
-    return results

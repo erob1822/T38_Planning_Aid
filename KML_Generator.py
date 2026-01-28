@@ -36,18 +36,21 @@ USAGE (from master script):
     KML_Generator.run()
 """
 
+# Standard library imports
+from datetime import datetime
+from pathlib import Path
+
+# Third-party imports
 import pandas as pd
 import simplekml
 from simplekml import Style
-from pathlib import Path
-from datetime import datetime
-from typing import Dict, Set, Tuple, Any
 
 # CONFIGURATION
 
 DATA = Path("DATA")
-VERSION = "Version 3.0"  # Update this when pushing changes
-
+OUTPUT = Path("KML_Output")
+APP_DIR = Path(".")
+Version = 'Version 3.0' # Will be reset by config later
 # Military ownership codes (these airports always have fuel)
 MIL_CODES = {"CG", "MA", "MN", "MR"}
 
@@ -91,12 +94,12 @@ def get_date_string() -> str:
     return datetime.now().strftime("%d %b %Y")
 
 
-def load_runway_data() -> Dict[str, list]:
+def load_runway_data():
     """
     Load and merge runway data from NASR CSVs.
     
     Returns:
-        Dict mapping IATA code to list of (runway_id, lda) tuples
+        Tuple of (airport DataFrame, dict mapping IATA code to runway data)
     """
     apt = pd.read_csv(DATA / "apt_data/APT_BASE.csv", low_memory=False)
     rwy = pd.read_csv(DATA / "apt_data/APT_RWY.csv", low_memory=False)
@@ -109,15 +112,15 @@ def load_runway_data() -> Dict[str, list]:
     rwy_merged['LDA'] = rwy_merged['LNDG_DIST_AVBL'].fillna(rwy_merged['RWY_LEN']).astype(int)
     
     # Build lookup dict: {IATA: [(rwy_id, lda), ...]} for O(1) access
-    rwy_lookup = rwy_merged.groupby('ARPT_ID').apply(
-        lambda g: list(zip(g['RWY_ID'], g['LDA'])), 
-        include_groups=False
+    # Use explicit column selection to avoid deprecated include_groups
+    rwy_lookup = rwy_merged.groupby('ARPT_ID')[['RWY_ID', 'LDA']].apply(
+        lambda g: list(zip(g['RWY_ID'], g['LDA']))
     ).to_dict()
     
     return apt, rwy_lookup
 
 
-def load_reference_sets() -> Tuple[Set[str], Set[str]]:
+def load_reference_sets():
     """
     Load fuel and JASU data as sets for O(1) membership checks.
     
@@ -125,12 +128,7 @@ def load_reference_sets() -> Tuple[Set[str], Set[str]]:
         Tuple of (fuel_set, jasu_set)
     """
     fuel_set = set(pd.read_csv(DATA / "fuel_data.csv", header=1)['ICAO'].dropna())
-    
-    jasu_path = DATA / "jasu_data.csv"
-    if jasu_path.exists():
-        jasu_set = set(pd.read_csv(jasu_path)['ICAO'].dropna())
-    else:
-        jasu_set = set()
+    jasu_set = set(pd.read_csv(DATA / "jasu_data.csv")['ICAO'].dropna())
     
     return fuel_set, jasu_set
 
@@ -159,10 +157,6 @@ def load_wb_list(wb_path: str = 'wb_list.xlsx') -> Dict[str, Any]:
         for _, r in wb.dropna(subset=['APT_COMM']).iterrows()
     }
     
-    # Build change request text
-    changerequest_values = wb["CHANGE_REQUEST"].dropna().tolist()
-    changerequest_text = "<br/>".join(str(v) for v in changerequest_values)
-    
     return {
         'landed': landed,
         'comments': comments,
@@ -172,7 +166,6 @@ def load_wb_list(wb_path: str = 'wb_list.xlsx') -> Dict[str, Any]:
         'cat2': set(wb['CAT_TWO'].dropna()),
         'cat3': set(wb['CAT_THREE'].dropna()),
         'rec_issues': set(wb['ISSUES_WITH_RECENTLY_LANDED'].dropna()),
-        'changerequest_text': changerequest_text,
     }
 
 
@@ -182,11 +175,16 @@ def build_master_dict(apt: pd.DataFrame, rwy_lookup: Dict, fuel_set: Set,
     Build master dictionary with one entry per ICAO airport.
     
     Enriches airport data with runway, fuel, jasu, and wb_list info.
+    Uses itertuples() for ~100x speedup over iterrows().
     """
     master_dict = {}
     
-    for _, row in apt.dropna(subset=['ICAO_ID']).iterrows():
-        icao, iata = row['ICAO_ID'], row['ARPT_ID']
+    # Filter to rows with ICAO_ID and use itertuples for speed
+    apt_filtered = apt.dropna(subset=['ICAO_ID'])
+    
+    for row in apt_filtered.itertuples(index=False):
+        icao = row.ICAO_ID
+        iata = row.ARPT_ID
         rwy_data = rwy_lookup.get(iata, [])
         
         if not rwy_data:
@@ -228,7 +226,7 @@ def build_master_dict(apt: pd.DataFrame, rwy_lookup: Dict, fuel_set: Set,
             "IATA Name": iata,
             "Runway Length": max_lda,
             "Runway Output": rwy_out,
-            "Contract Gas": icao in fuel_set or row['OWNERSHIP_TYPE_CODE'] in MIL_CODES,
+            "Contract Gas": icao in fuel_set or row.OWNERSHIP_TYPE_CODE in MIL_CODES,
             "JASU": icao in jasu_set,
             "Recently Landed": icao in wb['landed'],
             "Date Landed": rec_info[0] or "",
@@ -236,8 +234,8 @@ def build_master_dict(apt: pd.DataFrame, rwy_lookup: Dict, fuel_set: Set,
             "Back Seat": rec_info[2] or "",
             "Black List": icao in wb['black_set'],
             "White List": icao in wb['white_set'],
-            "Latitude": row['LAT_DECIMAL'],
-            "Longitude": row['LONG_DECIMAL'],
+            "Latitude": row.LAT_DECIMAL,
+            "Longitude": row.LONG_DECIMAL,
             "OCONUS": icao[0] != 'K',
             "Category": cat,
             "Comments": comm_str,
@@ -268,7 +266,7 @@ def create_kml_styles() -> Dict[str, Style]:
     return styles
 
 
-def generate_kml(master_dict: Dict, wb: Dict, date_str: str, version: str = None) -> int:
+def generate_kml(master_dict: Dict, wb: Dict, date_str: str, version: str) -> int:
     """
     Generate KML file with color-coded airport pins.
     
@@ -276,14 +274,11 @@ def generate_kml(master_dict: Dict, wb: Dict, date_str: str, version: str = None
         master_dict: Dictionary of airport data
         wb: Workbook data from load_wb_list()
         date_str: Date string for filename
-        version: Version string from cfg (falls back to global VERSION if None)
+        version: Version string from cfg
     
     Returns:
         Number of airports included in KML
     """
-    if version is None:
-        version = VERSION
-        
     styles = create_kml_styles()
     kml_out = simplekml.Kml()
     
@@ -303,20 +298,21 @@ def generate_kml(master_dict: Dict, wb: Dict, date_str: str, version: str = None
         # Apply exclusion filters
         if d['OCONUS'] or d['Black List']:
             continue
+        # MODIFY: runway threshold - change 7000 to adjust minimum LDA
         if d['Runway Length'] < 7000 or not d['Contract Gas']:
             continue
         if not (isinstance(icao, str) and icao.startswith('K') and len(icao) == 4):
             continue
         
-        # Determine pin color based on JASU availability and recent ops history
+        # MODIFY: pin color logic - blue/yellow/green assignment based on JASU availability and recent ops
         has_issue = not d['Recently Landed'] or d['Issues with Recently Landed']
         
         if d['JASU'] and has_issue:
-            pin, style = 'blue', styles['go']
+            pin, style = 'blue', styles['go']       # JASU listed, no recent ops
         elif not d['JASU'] and has_issue:
-            pin, style = 'yellow', styles['nogo']
+            pin, style = 'yellow', styles['nogo']   # No JASU, call FBO
         elif d['Recently Landed'] or d['White List']:
-            pin, style = 'green', styles['prev']
+            pin, style = 'green', styles['prev']    # Recently landed, known good
         else:
             continue
         
@@ -368,16 +364,16 @@ def generate_kml(master_dict: Dict, wb: Dict, date_str: str, version: str = None
         
         # Record for txt output
         txt_color = 'red-circle' if "Category 1" in d['Category'] else \
-                    'red-diamond' if "Category" in d['Category'] else pin
+                    'red-diamond' if d['Category'] else pin
         comment_clean = str(d['Comments']).replace('<br/>', ' ').replace('nan', '').strip()
         txt_lines.append(f"{icao}\t{txt_color}\t{d['Runway Length']}\t{comment_clean}")
     
-    # Save KML
-    kml_filename = f"T38 Apts {date_str}.kml"
-    kml_out.save(kml_filename)
+    # Save KML to output folder
+    kml_filename = OUTPUT / f"T38 Apts {date_str}.kml"
+    kml_out.save(str(kml_filename))
     
-    # Save txt summary
-    with open('T38_Airports.txt', 'w') as f:
+    # Save txt summary to output folder
+    with open(OUTPUT / 'T38_Airports.txt', 'w') as f:
         f.write('ICAO\tPinColor\tRunwayLength\tComments\n')
         for line in txt_lines:
             f.write(line + '\n')
@@ -387,48 +383,37 @@ def generate_kml(master_dict: Dict, wb: Dict, date_str: str, version: str = None
 
 # MODULE-LEVEL RUN FUNCTION
 
-def run(cfg=None) -> Dict[str, Dict]:
+def run(cfg):
     """
     Main entry point - called by T38_PlanAid.py master script.
     
     Args:
-        cfg: AppConfig object from master script (contains version, paths, etc.)
-             If None, uses defaults for standalone execution.
-        
-    Returns:
-        master_dict for potential further processing
+        cfg: AppConfig object from master script
     """
-    # Extract config values or use defaults
-    if cfg is not None:
-        wb_path = str(cfg.master_excel_path) if hasattr(cfg, 'master_excel_path') else 'wb_list.xlsx'
-        version = cfg.version if hasattr(cfg, 'version') else VERSION
-        data_path = cfg.data_folder if hasattr(cfg, 'data_folder') else DATA
-    else:
-        wb_path = 'wb_list.xlsx'
-        version = VERSION
-        data_path = DATA
+    global DATA, OUTPUT, APP_DIR
+    DATA = cfg.data_folder
+    OUTPUT = cfg.output_folder
+    APP_DIR = cfg.app_dir
     
     # Load all data sources
     print("Loading airport and runway data...")
     apt, rwy_lookup = load_runway_data()
     fuel_set, jasu_set = load_reference_sets()
-    wb = load_wb_list(wb_path)
+    wb = load_wb_list(APP_DIR / 'wb_list.xlsx')
     
     # Build master dictionary
     print("Building master dictionary...")
     master_dict = build_master_dict(apt, rwy_lookup, fuel_set, jasu_set, wb)
     
     # Save master dict to Excel
-    pd.DataFrame.from_dict(master_dict, orient='index').to_excel('T38_masterdict.xlsx')
+    pd.DataFrame.from_dict(master_dict, orient='index').to_excel(OUTPUT / 'T38_masterdict.xlsx')
     
     # Generate KML
     print("Generating KML file...")
     date_str = get_date_string()
-    num_airports = generate_kml(master_dict, wb, date_str, version)
+    num_airports = generate_kml(master_dict, wb, date_str, cfg.version)
     
-    print("KML file generated!")
-    
-    return master_dict
+    print(f"KML file generated with {num_airports} airports!")
 
 
 # AUTO-RUN ON IMPORT (matches original pattern - comment out if not desired)

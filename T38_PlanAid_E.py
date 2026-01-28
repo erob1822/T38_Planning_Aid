@@ -1,48 +1,39 @@
 """
 T38_PlanAid.py - Master Orchestrator for T-38 PlanAid Application
 
-Mirrors Alec's architecture: AppConfig dataclass holds all configuration,
-passed to sub-scripts for data acquisition and KML generation.
+AppConfig dataclass holds all configuration data which gets passed to data_acquistion and kml_generator.
 """
 
-import os
+# Standard library imports
+import shutil
 import sys
-from pathlib import Path
-from dataclasses import dataclass, field
-from datetime import datetime
-from typing import ClassVar, Any
 import time
 import warnings
+from dataclasses import dataclass, field
+from pathlib import Path
+from typing import ClassVar
+
+# Local module imports
+import Data_Acquisition
+import KML_Generator
 
 warnings.filterwarnings("ignore")
+
+# Get the directory where the exe/script is located (not the current working directory)
+if getattr(sys, 'frozen', False):
+    # Running as compiled exe
+    APP_DIR = Path(sys.executable).parent
+else:
+    # Running as script
+    APP_DIR = Path(__file__).parent
 
 
 @dataclass
 class AppConfig:
     """Configuration for T-38 PlanAid application. Passed to sub-scripts."""
     
-    # Current version - shown on KML pin outside T-38 working area
+    # MODIFY: version - update this for each release, shown on KML pin within the Gulf of America.
     version: ClassVar[str] = 'Version 3.0 (Evans Edition)'
-
-    # Excel config
-    master_excel_fname: ClassVar[str] = 'wb_list.xlsx'
-    sheet_name: ClassVar[str] = 'kml data'
-    header_row: ClassVar[int] = 1
-
-    # Column headers in wb_list.xlsx
-    AC: ClassVar[str] = 'APT_COMM'
-    AU: ClassVar[str] = 'API_URL'
-    CD: ClassVar[str] = 'COMMENT_DATE'
-    CC: ClassVar[str] = 'COMMENTS'
-    DL: ClassVar[str] = 'DATE_LANDED'
-    RL: ClassVar[str] = 'RECENTLY_LANDED'
-    FS: ClassVar[str] = 'FRONT_SEAT'
-    BS: ClassVar[str] = 'BACK_SEAT'
-    YI: ClassVar[str] = 'YEARS_INCLUDED'
-
-    # Data sources config
-    force_download: ClassVar[bool] = False
-    timestamp_format: ClassVar[str] = "%Y%m%d_%H%M%S"
 
     # AOD sources
     aod_flights_api: ClassVar[str] = 'https://ndjsammweb.ndc.nasa.gov/Flightmetrics/api/cbdata/t38airports'
@@ -57,49 +48,33 @@ class AppConfig:
     dla_fuel_check: ClassVar[str] = 'https://cis.energy.dla.mil/ipcis/Ipcis'
     dla_fuel_download: ClassVar[str] = 'https://cis.energy.dla.mil/ipcis/Download?searchValue=UNITED%20STATES&field=REGION&recordType=100'
 
-    # Instance fields
-    data_folder: Path = field(default_factory=lambda: Path('DATA'))
-    output_folder: Path = field(default_factory=lambda: Path('KML_Output'))
+    # Instance fields - paths (relative to APP_DIR so exe output lands next to exe)
+    app_dir: Path = field(default_factory=lambda: APP_DIR)
+    data_folder: Path = field(default_factory=lambda: APP_DIR / 'DATA')
+    output_folder: Path = field(default_factory=lambda: APP_DIR / 'KML_Output')
 
     def __post_init__(self):
-        """Compute derived paths and create directories."""
-        self.run_timestamp = datetime.now().strftime(self.timestamp_format)
+        """Compute derived paths."""
         self.apt_data_dir = self.data_folder / 'apt_data'
-        self.master_excel_path = Path(self.master_excel_fname)
-        
-        # Create directories
-        self.data_folder.mkdir(parents=True, exist_ok=True)
-        self.apt_data_dir.mkdir(parents=True, exist_ok=True)
-        self.output_folder.mkdir(parents=True, exist_ok=True)
 
 
 def main():
     """Main entry point - orchestrates all T-38 PlanAid scripts."""
-    
     # Initialize configuration
     cfg = AppConfig()
     
     # Delete DATA folder to ensure fresh data every run
-    import shutil
     if cfg.data_folder.exists():
         shutil.rmtree(cfg.data_folder)
     cfg.data_folder.mkdir(parents=True, exist_ok=True)
     cfg.apt_data_dir.mkdir(parents=True, exist_ok=True)
+    cfg.output_folder.mkdir(parents=True, exist_ok=True)
     
     # Run Data Acquisition
-    import Data_Acquisition
     Data_Acquisition.run(cfg)
     
     # Run KML Generator
-    import KML_Generator
     KML_Generator.run(cfg)
-
-
-def print_credits():
-    print("\nRPL Military Intern Developers by Alphabetical Order:")
-    print("Nick Bostock \nJacob Cates \nAlex Clark \nIgnatius Liberto \nAdrien Richez \nJames Zuzelski")
-    print("\nCB & AOD POCs by Alphabetical Order:")
-    print("Sean Brady \nDan Cochran \nLuke Delaney \nJonny Kim")
 
 
 NASA = """                                                                 
@@ -136,7 +111,6 @@ NASA = """
 
 if __name__ == "__main__":
     main()
-    print_credits()
     
     # Print ASCII art with delay
     lines = NASA.strip().split('\n')

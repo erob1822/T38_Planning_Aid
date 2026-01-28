@@ -11,6 +11,9 @@ import shutil
 from pathlib import Path
 
 def main():
+    # Get the directory where this script is located
+    script_dir = Path(__file__).parent.resolve()
+    
     # Check if PyInstaller is installed
     try:
         import PyInstaller
@@ -19,11 +22,12 @@ def main():
         subprocess.check_call([sys.executable, "-m", "pip", "install", "pyinstaller"])
     
     # Clean previous builds
-    for folder in ['build', 'dist']:
-        if Path(folder).exists():
-            shutil.rmtree(folder)
+    for folder in ['build', 'dist', 'T38 PlanAid Distribution']:
+        folder_path = script_dir / folder
+        if folder_path.exists():
+            shutil.rmtree(folder_path)
     
-    spec_file = Path('T38_PlanAid.spec')
+    spec_file = script_dir / 'T38_PlanAid.spec'
     if spec_file.exists():
         spec_file.unlink()
     
@@ -48,12 +52,35 @@ def main():
     result = subprocess.run(cmd, cwd=Path(__file__).parent)
     
     if result.returncode == 0:
-        exe_path = Path("dist") / "T38_PlanAid.exe"
+        # Rename dist folder to "T38 PlanAid Distribution"
+        dist_folder = Path("dist")
+        distribution_folder = Path("T38 PlanAid Distribution")
+        
+        # Remove existing distribution folder if it exists
+        if distribution_folder.exists():
+            shutil.rmtree(distribution_folder)
+        
+        # Rename dist to the new name
+        dist_folder.rename(distribution_folder)
+        
+        exe_path = distribution_folder / "T38_PlanAid.exe"
+        
+        # Copy wb_list.xlsx to the distribution folder
+        wb_list_src = Path("wb_list.xlsx")
+        wb_list_dst = distribution_folder / "wb_list.xlsx"
+        if wb_list_src.exists():
+            shutil.copy2(wb_list_src, wb_list_dst)
+            print(f"Copied wb_list.xlsx to distribution folder")
+        else:
+            print(f"Warning: wb_list.xlsx not found in source directory")
+        
         print(f"\nBuild successful!")
         print(f"Executable: {exe_path.absolute()}")
-        print(f"\nTo distribute, copy these files together:")
+        print(f"\nDistribution folder ready: {distribution_folder.absolute()}")
+        print(f"Contents:")
         print(f"  - {exe_path.name}")
         print(f"  - wb_list.xlsx")
+        print(f"  (KML_Output folder will be created on first run)")
     else:
         print(f"\nBuild failed with code {result.returncode}")
         sys.exit(1)
