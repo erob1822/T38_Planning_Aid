@@ -22,7 +22,41 @@ from typing import ClassVar
 import Data_Acquisition
 import KML_Generator
 
+
 warnings.filterwarnings("ignore")
+
+# --- Logging Setup (Alec style) ---
+import colorlog
+import logging
+
+def setup_logging(output_folder):
+    root_logger = logging.getLogger()
+    root_logger.setLevel(logging.INFO)
+    log_filename = 'logfile.log'
+    log_filepath = output_folder / log_filename
+    if root_logger.hasHandlers():
+        root_logger.handlers.clear()
+    handler = colorlog.StreamHandler()
+    handler.setFormatter(colorlog.ColoredFormatter(
+        '%(log_color)s%(asctime)s - %(name)-18s - %(levelname)-8s - %(message)s',
+        datefmt='%Y-%m-%d %H:%M:%S',
+        log_colors={
+            'DEBUG':    'cyan',
+            'INFO':     'green',
+            'WARNING':  'yellow',
+            'ERROR':    'red',
+            'CRITICAL': 'bold_red,bg_white',
+        }
+    ))
+    log_filepath.parent.mkdir(parents=True, exist_ok=True)
+    file_handler = logging.FileHandler(log_filepath)
+    file_handler.setFormatter(logging.Formatter(
+        '%(asctime)s - %(name)-18s - %(levelname)-8s - %(message)s',
+        datefmt='%Y-%m-%d %H:%M:%S'
+    ))
+    root_logger.addHandler(handler)
+    root_logger.addHandler(file_handler)
+    return logging.getLogger(__name__)
 
 # Get the directory where the exe/script is located (not the current working directory)
 if getattr(sys, 'frozen', False):
@@ -76,21 +110,38 @@ def main():
     2. Runs Data_Acquisition (downloads all required data, including Google Sheet comments).
     3. Runs KML_Generator (builds master dictionary and generates KML and summary outputs).
     """
-    # Initialize configuration
     cfg = AppConfig()
-    
-    # Delete DATA folder to ensure fresh data every run (removes old CSVs and ensures new download)
-    if cfg.data_folder.exists():
-        shutil.rmtree(cfg.data_folder)
-    cfg.data_folder.mkdir(parents=True, exist_ok=True)
-    cfg.apt_data_dir.mkdir(parents=True, exist_ok=True)
-    cfg.output_folder.mkdir(parents=True, exist_ok=True)
-    
-    # Run Data Acquisition (downloads all data, including Google Sheet comments, APIs, and external CSVs)
-    Data_Acquisition.run(cfg)
-    
-    # Run KML Generator (builds master dict and generates KML/Excel/txt outputs)
-    KML_Generator.run(cfg)
+    logger = setup_logging(cfg.output_folder)
+    logger.info("=" * 60)
+    logger.info("T-38 PlanAid - Main Execution")
+    logger.info("=" * 60)
+    try:
+        if cfg.data_folder.exists():
+            shutil.rmtree(cfg.data_folder)
+        cfg.data_folder.mkdir(parents=True, exist_ok=True)
+        cfg.apt_data_dir.mkdir(parents=True, exist_ok=True)
+        cfg.output_folder.mkdir(parents=True, exist_ok=True)
+
+        logger.info("[1/2] Running Data_Acquisition...")
+        logger.info("-" * 60)
+        Data_Acquisition.run(cfg)
+        logger.info("-" * 60)
+
+        logger.info("[2/2] Running KML_Generator...")
+        logger.info("-" * 60)
+        KML_Generator.run(cfg)
+        logger.info("-" * 60)
+
+        logger.info("=" * 60)
+        logger.info("All scripts executed successfully!")
+        logger.info("=" * 60)
+    except Exception as e:
+        logger.error("=" * 60)
+        logger.error("AN ERROR OCCURRED DURING EXECUTION")
+        logger.error("=" * 60)
+        logger.exception("Execution failed")
+        return 1
+    return 0
 
 
 NASA = """                                                                 
@@ -126,8 +177,7 @@ NASA = """
 
 
 if __name__ == "__main__":
-    main()
-    
+    exit_code = main()
     # Print ASCII art with delay
     lines = NASA.strip().split('\n')
     for line in lines:

@@ -63,3 +63,54 @@ T38 PlanAid Distribution/DATA/apt_data/APT_RWY_END.csv
 T38 PlanAid Distribution/DATA/apt_data/APT_RWY.csv
 T38 PlanAid Distribution/KML_Output/T38 Apts 28 Jan 2026.kml
 T38_PlanAid.exe
+Alec/T38_PlanAid_COPY-main/.gitignore
+Alec/T38_PlanAid_COPY-main/API_Scraper.py
+Alec/T38_PlanAid_COPY-main/Data_Downloader.py
+Alec/T38_PlanAid_COPY-main/Developer_ReadMe.txt
+Alec/T38_PlanAid_COPY-main/JASU_Finder.py
+Alec/T38_PlanAid_COPY-main/KML_Generator.py
+Alec/T38_PlanAid_COPY-main/LDA_Tester.py
+Alec/T38_PlanAid_COPY-main/pyproject.toml
+Alec/T38_PlanAid_COPY-main/README.md
+Alec/T38_PlanAid_COPY-main/requirements.txt
+Alec/T38_PlanAid_COPY-main/T38 Apts 02 Oct 2025.kml
+Alec/T38_PlanAid_COPY-main/T38 Apts 27 Nov 2025.kml
+Alec/T38_PlanAid_COPY-main/T38_PlanAid_V2.1.exe
+Alec/T38_PlanAid_COPY-main/T38_PlanAid.py
+Alec/T38_PlanAid_COPY-main/temp.py
+Alec/T38_PlanAid_COPY-main/utils.py
+Alec/T38_PlanAid_COPY-main/wb_list.xlsx
+Alec/T38_PlanAid_COPY-main/Archive/.gitignore
+Alec/T38_PlanAid_COPY-main/Archive/README.md
+Alec/T38_PlanAid_COPY-main/Archive/T-38 PlanAid 1.09d/T-38 PlanAid 1.09d/data_combiner.py
+Alec/T38_PlanAid_COPY-main/Archive/T-38 PlanAid 1.09d/T-38 PlanAid 1.09d/Data_puller.py
+Alec/T38_PlanAid_COPY-main/Archive/T-38 PlanAid 1.09d/T-38 PlanAid 1.09d/README.txt
+Alec/T38_PlanAid_COPY-main/Archive/T-38 PlanAid 1.09d/T-38 PlanAid 1.09d/T_38_Runner.py
+Alec/T38_PlanAid_COPY-main/Archive/T-38 PlanAid 1.09d/T-38 PlanAid 1.09d/.idea/misc.xml
+Alec/T38_PlanAid_COPY-main/Archive/T-38 PlanAid 1.09d/T-38 PlanAid 1.09d/.idea/modules.xml
+Alec/T38_PlanAid_COPY-main/Archive/T-38 PlanAid 1.09d/T-38 PlanAid 1.09d/.idea/T-38 PlanAid.iml
+Alec/T38_PlanAid_COPY-main/Archive/T-38 PlanAid 1.09d/T-38 PlanAid 1.09d/.idea/workspace.xml
+Alec/T38_PlanAid_COPY-main/Archive/T-38 PlanAid 1.09d/T-38 PlanAid 1.09d/.idea/inspectionProfiles/profiles_settings.xml
+Alec/T38_PlanAid_COPY-main/Archive/T-38_PlanAid_MASTER/T-38_PlanAid_MASTER/data_combiner.py
+Alec/T38_PlanAid_COPY-main/Archive/T-38_PlanAid_MASTER/T-38_PlanAid_MASTER/Data_Extractor.py
+Alec/T38_PlanAid_COPY-main/Archive/T-38_PlanAid_MASTER/T-38_PlanAid_MASTER/Data_puller.py
+Alec/T38_PlanAid_COPY-main/Archive/T-38_PlanAid_MASTER/T-38_PlanAid_MASTER/T_38_Application.py
+Alec/T38_PlanAid_COPY-main/Archive/T-38_PlanAid_MASTER/T-38_PlanAid_MASTER/T_38_Runner.py
+Alec/T38_PlanAid_COPY-main/Archive/T-38_PlanAid_MASTER/T-38_PlanAid_MASTER/.idea/.gitignore
+Alec/T38_PlanAid_COPY-main/Archive/T-38_PlanAid_MASTER/T-38_PlanAid_MASTER/.idea/misc.xml
+Alec/T38_PlanAid_COPY-main/Archive/T-38_PlanAid_MASTER/T-38_PlanAid_MASTER/.idea/modules.xml
+Alec/T38_PlanAid_COPY-main/Archive/T-38_PlanAid_MASTER/T-38_PlanAid_MASTER/.idea/T-38 PlanAid.iml
+Alec/T38_PlanAid_COPY-main/Archive/T-38_PlanAid_MASTER/T-38_PlanAid_MASTER/.idea/inspectionProfiles/profiles_settings.xml
+Alec/T38_PlanAid_COPY-main/Archive/T38_Data_Extractor_v1.02/T38_Data_Extractor_v1.02/.idea/misc.xml
+Alec/T38_PlanAid_COPY-main/Archive/T38_Data_Extractor_v1.02/T38_Data_Extractor_v1.02/.idea/modules.xml
+Alec/T38_PlanAid_COPY-main/Archive/T38_Data_Extractor_v1.02/T38_Data_Extractor_v1.02/.idea/T38DataExtractor.iml
+Alec/T38_PlanAid_COPY-main/Archive/T38_Data_Extractor_v1.02/T38_Data_Extractor_v1.02/.idea/workspace.xml
+Alec/T38_PlanAid_COPY-main/Archive/T38_Data_Extractor_v1.02/T38_Data_Extractor_v1.02/.idea/inspectionProfiles/profiles_settings.xml
+Alec/T38_PlanAid_COPY-main/Archive/T38_PlanAid 13SEP2024_ADRICHEZ/.gitkeep
+Alec/T38_PlanAid_COPY-main/Archive/T38_PlanAid 13SEP2024_ADRICHEZ/API_Scraper.py
+Alec/T38_PlanAid_COPY-main/Archive/T38_PlanAid 13SEP2024_ADRICHEZ/Data_Extractor.py
+Alec/T38_PlanAid_COPY-main/Archive/T38_PlanAid 13SEP2024_ADRICHEZ/JASU_Finder.py
+Alec/T38_PlanAid_COPY-main/Archive/T38_PlanAid 13SEP2024_ADRICHEZ/KML_Generator.py
+Alec/T38_PlanAid_COPY-main/Archive/T38_PlanAid 13SEP2024_ADRICHEZ/README.md
+Alec/T38_PlanAid_COPY-main/Archive/T38_PlanAid 13SEP2024_ADRICHEZ/T38_PlanAid.py
+Alec/T38_PlanAid_COPY-main/Archive/T38_PlanAid 13SEP2024_ADRICHEZ/wb_list.xlsx
