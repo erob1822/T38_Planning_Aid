@@ -116,10 +116,10 @@ class DataAcquisition:
         try:
             import openpyxl
             wb_path = self.cfg.app_dir / 'wb_list.xlsx'
+            # Prompt user to close Excel file FIRST
+            input(f"Please ensure '{wb_path}' is closed before continuing. Press Enter to proceed...")
             sheet_name = 'kml data'
             header_row = 1
-            # Prompt user to close Excel file
-            input(f"Please ensure '{wb_path}' is closed before continuing. Press Enter to proceed...")
             # Try opening workbook, retry if file is locked
             for attempt in range(3):
                 try:
