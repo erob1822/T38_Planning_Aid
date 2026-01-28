@@ -1,7 +1,12 @@
 """
-T38_PlanAid.py - Master Orchestrator for T-38 PlanAid Application
+T38_PlanAid_E.py - Master Orchestrator for T-38 PlanAid Application
 
-AppConfig dataclass holds all configuration data which gets passed to data_acquistion and kml_generator.
+This script serves as the main entry point for the T-38 PlanAid workflow. It:
+- Defines the AppConfig dataclass, which holds all configuration and URL endpoints for data acquisition and KML generation.
+- Initializes all required folders and cleans up old data for a fresh run.
+- Orchestrates the data acquisition (including online Google Sheet and API pulls) and KML generation steps.
+
+All configuration (API endpoints, Google Sheet URLs, file paths) is centralized in AppConfig and passed to submodules.
 """
 
 # Standard library imports
@@ -30,7 +35,11 @@ else:
 
 @dataclass
 class AppConfig:
-    """Configuration for T-38 PlanAid application. Passed to sub-scripts."""
+    """Configuration for T-38 PlanAid application. Passed to sub-scripts.
+    
+    Holds all URLs, API endpoints, and folder paths used by Data_Acquisition and KML_Generator.
+    Includes Google Sheet URL for comments, NASA APIs, FAA data, and DLA fuel sources.
+    """
     
     # MODIFY: version - update this for each release, shown on KML pin within the Gulf of America.
     version: ClassVar[str] = 'Version 3.0 (Evans Edition)'
@@ -59,21 +68,28 @@ class AppConfig:
 
 
 def main():
-    """Main entry point - orchestrates all T-38 PlanAid scripts."""
+    """
+    Main entry point - orchestrates all T-38 PlanAid scripts.
+    
+    Steps:
+    1. Initializes configuration and cleans/creates all required folders.
+    2. Runs Data_Acquisition (downloads all required data, including Google Sheet comments).
+    3. Runs KML_Generator (builds master dictionary and generates KML and summary outputs).
+    """
     # Initialize configuration
     cfg = AppConfig()
     
-    # Delete DATA folder to ensure fresh data every run
+    # Delete DATA folder to ensure fresh data every run (removes old CSVs and ensures new download)
     if cfg.data_folder.exists():
         shutil.rmtree(cfg.data_folder)
     cfg.data_folder.mkdir(parents=True, exist_ok=True)
     cfg.apt_data_dir.mkdir(parents=True, exist_ok=True)
     cfg.output_folder.mkdir(parents=True, exist_ok=True)
     
-    # Run Data Acquisition
+    # Run Data Acquisition (downloads all data, including Google Sheet comments, APIs, and external CSVs)
     Data_Acquisition.run(cfg)
     
-    # Run KML Generator
+    # Run KML Generator (builds master dict and generates KML/Excel/txt outputs)
     KML_Generator.run(cfg)
 
 

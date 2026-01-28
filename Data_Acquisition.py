@@ -1,35 +1,42 @@
 """
-Data_Acquisition.py - Unified Data Fetcher for T-38 PlanAid. Does everything--API pulls, airport data, fuel data, JASU etc, and writes to CSV
+Data_Acquisition.py - Unified Data Fetcher for T-38 PlanAid
 
-PURPOSE:
-    Module to acquire all external data needed by the KML generator.
-    Accepts cfg object
-    
-DATA SOURCES (URLs from cfg object):
-    1. AOD Flight API - cfg.aod_flights_api
-    2. AOD Comments - cfg.aod_comments_url  
-    3. FAA NASR - cfg.nasr_file_finder (28-day cycle)
-    4. DLA Fuel - cfg.dla_fuel_download
+Purpose:
+    Acquires all external and online data needed by the KML generator and Excel outputs.
+    Accepts a cfg (AppConfig) object with all URLs and folder paths.
 
-OUTPUT:
-    - DATA/apt_data/APT_BASE.csv, APT_RWY.csv, APT_RWY_END.csv (from NASR)
+Data Sources (URLs from cfg object):
+    1. AOD Flight API - cfg.aod_flights_api (NASA API)
+    2. AOD Comments - cfg.aod_comments_url (Google Sheet, downloaded as CSV)
+    3. FAA NASR - cfg.nasr_file_finder (28-day cycle, airport/runway data)
+    4. DLA Fuel - cfg.dla_fuel_download (contract fuel data)
+
+Output:
+    - DATA/apt_data/APT_BASE.csv, APT_RWY.csv, APT_RWY_END.csv (from FAA NASR)
     - DATA/fuel_data.csv (from DLA)
-    - DATA/flights_data.csv, comments_data.csv
+    - DATA/flights_data.csv (from NASA API)
+    - DATA/comments_data.csv (from Google Sheet)
 
-USAGE (from master script):
+    All files are written to the DATA/ directory for use by KML_Generator and Excel update routines.
+
+Usage (from master script):
     import Data_Acquisition
     Data_Acquisition.run(cfg)
 """
+
 
 # Standard library imports
 import re
 import shutil
 import tempfile
 import zipfile
+import json
+import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Dict
+import logging
 
 # Third-party imports
 import pandas
@@ -46,11 +53,165 @@ try:
 except ImportError:
     HAS_NTLM = False
 
+
 # Suppress SSL warnings
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
+# Setup logging (console + file)
+log_dir = Path("logs")
+log_dir.mkdir(exist_ok=True)
+log_file = log_dir / f"data_acquisition_{datetime.now().strftime('%Y%m%d_%H%M%S')}.log"
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(levelname)s - %(message)s',
+    handlers=[
+        logging.StreamHandler(),
+        logging.FileHandler(log_file, mode='w')
+    ]
+)
+logger = logging.getLogger(__name__)
+
 
 class DataAcquisition:
+    def __init__(self, cfg):
+        """
+        Initialize the DataAcquisition object with configuration.
+        Args:
+            cfg: AppConfig object containing all URLs, folder paths, and settings for data sources.
+        Sets up data directories, cache, and HTTP session for robust online data fetching.
+        """
+        self.cfg = cfg
+        self.data_dir = cfg.data_folder
+        self.apt_data_dir = cfg.apt_data_dir
+        self.cache_file = self.data_dir / "data_download_cache.json"
+        # Load or initialize cache
+        self.cache = self._load_cache()
+        # Configure HTTP session with retries
+        self.session = self._create_session()
+
+    def _load_cache(self):
+        if self.cache_file.exists():
+            try:
+                with open(self.cache_file, 'r') as f:
+                    return json.load(f)
+            except Exception as e:
+                logger.warning(f"Failed to load cache: {e}")
+        return {}
+
+    def _save_cache(self):
+        try:
+            with open(self.cache_file, 'w') as f:
+                json.dump(self.cache, f, indent=2)
+        except Exception as e:
+            logger.warning(f"Failed to save cache: {e}")
+
+    def update_wb_list(self) -> bool:
+        """
+        Update wb_list.xlsx with recent mission data and comments from Google Sheet.
+        - Reads DATA/flights_data.csv and DATA/comments_data.csv
+        - Updates the 'kml data' sheet in wb_list.xlsx with new values
+        - Handles header matching, user prompt to close Excel, and data validation
+        Returns True if update is successful, False otherwise.
+        """
+        try:
+            import openpyxl
+            wb_path = self.cfg.app_dir / 'wb_list.xlsx'
+            sheet_name = 'kml data'
+            header_row = 1
+            # Prompt user to close Excel file
+            input(f"Please ensure '{wb_path}' is closed before continuing. Press Enter to proceed...")
+            # Try opening workbook, retry if file is locked
+            for attempt in range(3):
+                try:
+                    wb = openpyxl.load_workbook(wb_path)
+                    break
+                except Exception as e:
+                    logger.error(f"Could not open wb_list.xlsx (attempt {attempt+1}/3): {e}")
+                    time.sleep(2)
+            else:
+                logger.error("Failed to open wb_list.xlsx after 3 attempts.")
+                return False
+            if sheet_name not in wb.sheetnames:
+                logger.error(f"Sheet '{sheet_name}' not found in wb_list.xlsx.")
+                return False
+            ws = wb[sheet_name]
+            # Read headers robustly
+            headers = {}
+            for cell in ws[header_row]:
+                if cell.value:
+                    headers[str(cell.value).strip().upper()] = cell.column
+            # --- Update recent mission data ---
+            flights_path = self.data_dir / "flights_data.csv"
+            if flights_path.exists():
+                import pandas as pd
+                flights_df = pd.read_csv(flights_path)
+                selected_headers = ['RECENTLY_LANDED', 'DATE_LANDED', 'FRONT_SEAT', 'BACK_SEAT']
+                # Validate columns
+                for h in selected_headers:
+                    if h not in flights_df.columns:
+                        logger.warning(f"Column '{h}' missing in flights_data.csv.")
+                # Clear existing data below headers
+                for header in selected_headers:
+                    col = headers.get(header.upper())
+                    if not col:
+                        logger.warning(f"Header '{header}' not found in Excel.")
+                        continue
+                    for row in range(header_row+1, ws.max_row+1):
+                        ws.cell(row=row, column=col, value=None)
+                # Write new data, validate types
+                for idx, row in flights_df.iterrows():
+                    for header in selected_headers:
+                        col = headers.get(header.upper())
+                        if col:
+                            val = row.get(header, None)
+                            # Data validation: ensure date format for DATE_LANDED
+                            if header == 'DATE_LANDED' and val:
+                                try:
+                                    pd.to_datetime(val)
+                                except Exception:
+                                    logger.warning(f"Invalid date '{val}' in row {idx+1}")
+                            ws.cell(row=header_row+1+idx, column=col, value=val)
+                # Clear any orphaned rows below new data
+                for header in selected_headers:
+                    col = headers.get(header.upper())
+                    if not col:
+                        continue
+                    for row in range(header_row+1+len(flights_df), ws.max_row+1):
+                        ws.cell(row=row, column=col, value=None)
+            # --- Update comments from Google Sheet ---
+            comments_path = self.data_dir / "comments_data.csv"
+            if comments_path.exists():
+                import pandas as pd
+                comments_df = pd.read_csv(comments_path)
+                comment_headers = ['APT_COMM', 'COMMENT_DATE', 'COMMENTS']
+                for h in comment_headers:
+                    if h not in comments_df.columns:
+                        logger.warning(f"Column '{h}' missing in comments_data.csv.")
+                for header in comment_headers:
+                    col = headers.get(header.upper())
+                    if not col:
+                        logger.warning(f"Header '{header}' not found in Excel.")
+                        continue
+                    for row in range(header_row+1, ws.max_row+1):
+                        ws.cell(row=row, column=col, value=None)
+                for idx, row in comments_df.iterrows():
+                    for header in comment_headers:
+                        col = headers.get(header.upper())
+                        if col:
+                            ws.cell(row=header_row+1+idx, column=col, value=row.get(header, None))
+                for header in comment_headers:
+                    col = headers.get(header.upper())
+                    if not col:
+                        continue
+                    for row in range(header_row+1+len(comments_df), ws.max_row+1):
+                        ws.cell(row=row, column=col, value=None)
+            wb.save(wb_path)
+            wb.close()
+            logger.info("wb_list.xlsx updated with latest mission data and comments.")
+            return True
+        except Exception as e:
+            logger.error(f"Failed to update wb_list.xlsx: {e}")
+            return False
     """
     Data acquisition using cfg object from T38_PlanAid.py.
     """
@@ -91,16 +252,18 @@ class DataAcquisition:
         percent = int(100 * current / total)
         return f"\r[{'=' * progress}{' ' * (width - progress)}] {percent}%"
     
-    # AOD FLIGHT DATA - uses cfg.aod_flights_api
+  
+    # AOD FLIGHT DATA (NASA API)
+    # Uses cfg.aod_flights_api to fetch recent T-38 flight data for all airports.
     
     def download_flights(self) -> bool:
         """
-        Download recent flight data from AOD API.
-        
-        Uses: cfg.aod_flights_api
-        
-        Returns:
-            True if successful
+        Download recent flight data from NASA AOD API.
+        - Uses cfg.aod_flights_api (requires NTLM auth)
+        - Filters for flights within years_included
+        - Extracts ICAO, date, crew info
+        - Writes to DATA/flights_data.csv
+        Returns True if successful, False otherwise.
         """
         if not HAS_NTLM:
             return False
@@ -160,16 +323,17 @@ class DataAcquisition:
         except Exception:
             return False
     
-    # AOD COMMENTS - uses cfg.aod_comments_url
+
+    # AOD COMMENTS (Google Sheet)
+    # Uses cfg.aod_comments_url to fetch latest comments for airports from a shared Google Sheet.
     
     def download_comments(self) -> bool:
         """
-        Download comments from Google Sheets.
-        
-        Uses: cfg.aod_comments_url
-        
-        Returns:
-            True if successful
+        Download comments from Google Sheet (AOD Comments).
+        - Uses cfg.aod_comments_url (public Google Sheet as CSV)
+        - Reads sheet, skips first 3 header rows
+        - Writes to DATA/comments_data.csv
+        Returns True if successful, False otherwise.
         """
         try:
             url = self.cfg.aod_comments_url
@@ -182,21 +346,16 @@ class DataAcquisition:
         except Exception:
             return False
     
-    # FAA NASR DATA - uses cfg.nasr_file_finder
+    # FAA NASR DATA (Airport/Runway)
+    # Uses cfg.nasr_file_finder to download and extract official FAA airport/runway CSVs.
     
     def download_nasr(self) -> bool:
         """
-        Download FAA NASR data (Airport, Runway, Runway End data).
-        
-        Uses: cfg.nasr_file_finder to get download URL
-        
-        Produces:
-            - DATA/apt_data/APT_BASE.csv
-            - DATA/apt_data/APT_RWY.csv  
-            - DATA/apt_data/APT_RWY_END.csv
-        
-        Returns:
-            True if successful
+        Download FAA NASR data (Airport, Runway, Runway End CSVs).
+        - Uses cfg.nasr_file_finder to get download URL
+        - Downloads and extracts required CSVs to DATA/apt_data/
+        - Handles nested ZIP structure in NASR download
+        Returns True if successful, False otherwise.
         """
         required_files = ['APT_BASE.csv', 'APT_RWY.csv', 'APT_RWY_END.csv']
         
@@ -261,14 +420,9 @@ class DataAcquisition:
     def download_fuel(self) -> bool:
         """
         Download contract fuel data from DLA.
-        
-        Uses: cfg.dla_fuel_check, cfg.dla_fuel_download
-        
-        Produces:
-            - DATA/fuel_data.csv
-        
-        Returns:
-            True if successful
+        - Uses cfg.dla_fuel_check (for status) and cfg.dla_fuel_download (for CSV)
+        - Writes to DATA/fuel_data.csv
+        Returns True if successful, False otherwise.
         """
         fuel_path = self.data_dir / "fuel_data.csv"
         
@@ -288,7 +442,9 @@ class DataAcquisition:
         except Exception:
             return False
     
-    # FAA DCS (Digital Chart Supplement) - uses cfg.dcs_file_finder
+
+    # FAA DCS (Digital Chart Supplement)
+    # Uses cfg.dcs_file_finder to download and extract AFD PDFs for JASU parsing.
     
     def download_dcs(self) -> bool:
         """
@@ -351,7 +507,10 @@ class DataAcquisition:
         except Exception:
             return False
     
-    # JASU FINDER - parses DCS PDFs for JASU references
+
+
+    # JASU FINDER (from DCS PDFs)
+    # Parses AFD PDFs to extract ICAO codes with JASU (Jet Air Start Unit) availability.
     
     def parse_jasu(self) -> bool:
         """
@@ -459,36 +618,49 @@ class DataAcquisition:
     # MAIN EXECUTION
     
     def run_all(self):
-        """Run all data acquisition tasks."""
+        """Run all data acquisition tasks with caching and extra outputs."""
         results = {}
-        
         # PHASE 1: Parallel downloads for small/fast API calls
-        print("Fetching flight data, comments, and fuel...")
+        logger.info("Fetching flight data, comments, and fuel...")
         parallel_tasks = {
             'flights': self.download_flights,
             'comments': self.download_comments,
             'fuel': self.download_fuel,
         }
-        
         with ThreadPoolExecutor(max_workers=3) as executor:
             futures = {executor.submit(func): name for name, func in parallel_tasks.items()}
             for future in as_completed(futures):
                 name = futures[future]
                 try:
                     results[name] = future.result()
-                except Exception:
+                except Exception as e:
+                    logger.error(f"Error in {name}: {e}")
                     results[name] = False
-        
-        # PHASE 2: Large sequential downloads
-        print("Fetching FAA airport/runway data...")
-        results['nasr'] = self.download_nasr()
-        
-        print("Fetching FAA Chart Supplement...")
-        results['dcs'] = self.download_dcs()
-        
+        # PHASE 2: Large sequential downloads with caching
+        for key, func in [('nasr', self.download_nasr), ('dcs', self.download_dcs)]:
+            last_download = self.cache.get(key, {}).get('last_download')
+            now = datetime.now().isoformat()
+            if last_download:
+                logger.info(f"{key.upper()} last downloaded at {last_download}")
+                # Optionally, skip if recent (e.g., within 1 day)
+                # continue
+            logger.info(f"Fetching {key.upper()} data...")
+            result = func()
+            results[key] = result
+            if result:
+                self.cache[key] = {'last_download': now}
         # PHASE 3: Parse JASU (depends on DCS)
         results['jasu'] = self.parse_jasu()
-        
+        self.cache['jasu'] = {'last_run': datetime.now().isoformat()}
+        self._save_cache()
+        # Output summary as JSON
+        summary_path = self.data_dir / "data_acquisition_summary.json"
+        try:
+            with open(summary_path, 'w') as f:
+                json.dump(results, f, indent=2)
+            logger.info(f"Summary written to {summary_path}")
+        except Exception as e:
+            logger.warning(f"Failed to write summary: {e}")
         return results
 
 
@@ -497,11 +669,15 @@ class DataAcquisition:
 def run(cfg):
     """
     Main entry point - called by T38_PlanAid.py master script.
-    
+    Ensures DataAcquisition is always properly initialized.
     Args:
         cfg: AppConfig object containing all API URLs and paths
     """
     da = DataAcquisition(cfg)
+    # Defensive: ensure cache attribute exists
+    if not hasattr(da, 'cache'):
+        da.cache = {}
     da.run_all()
-    
+    # Update wb_list.xlsx with latest data
+    da.update_wb_list()
     print("Data acquisition complete!")

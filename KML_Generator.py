@@ -1,39 +1,38 @@
 """
 KML_Generator.py - T-38 Airport KML Generator
 
-PURPOSE:
+Purpose:
     Builds a master dictionary of CONUS airports with T-38 relevant data and generates
     a KML file with color-coded pins for use in Google Earth flight planning.
-    
-    This is an optimized version based on Evan's testbed improvements:
-    - Uses pandas merge() for runway matching instead of O(n³) nested loops
-    - Uses sets for O(1) membership lookups instead of lists
-    - Uses dicts keyed by ICAO for crew/comment lookups instead of .index() searches
-    - Compact style setup using dict comprehension
 
-DATA SOURCES (from Data_Acquisition.py):
+    Key features:
+    - Efficient data merging and lookups (pandas, sets, dicts)
+    - Reads all data from local CSVs and Excel (produced by Data_Acquisition, including Google Sheet comments)
+    - Pin color logic reflects JASU, recent ops, and airport category
+
+Data Sources (from Data_Acquisition.py):
     - DATA/apt_data/APT_BASE.csv: Airport ICAO/IATA codes, coordinates, ownership type
     - DATA/apt_data/APT_RWY.csv: Runway IDs and lengths per airport
     - DATA/apt_data/APT_RWY_END.csv: Runway end declared distances (LDA)
     - DATA/fuel_data.csv: Airports with government contract fuel (header on row 3)
     - DATA/jasu_data.csv: Airports with JASU (air start cart) listed in A/FD
-    - wb_list.xlsx: Recently landed, blacklist, whitelist, categories, comments, crew info
+    - wb_list.xlsx: Recently landed, blacklist, whitelist, categories, comments, crew info (including Google Sheet comments)
 
-OUTPUT:
+Output:
     - T38_masterdict.xlsx: Full airport database with all computed fields
     - T38 Apts {date}.kml: Color-coded airport pins for Google Earth
     - T38_Airports.txt: Tab-delimited summary for quick reference
 
-PIN COLOR LOGIC (as a refresher):
+Pin Color Logic:
     - Blue: JASU listed, no recent ops (or has issues) - good to go
     - Yellow: No JASU listed, no recent ops - call FBO to verify cart availability
     - Green: Recently landed by T-38 (and no issues flagged) - known to work
     - Red diamond: Category 2 or 3 airport - requires extra planning/approval
     - Red circle: Category 1 airport - T-38 operations prohibited
 
-USAGE (from master script):
+Usage (from master script):
     import KML_Generator
-    KML_Generator.run()
+    KML_Generator.run(cfg)
 """
 
 # Standard library imports
