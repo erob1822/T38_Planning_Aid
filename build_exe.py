@@ -67,17 +67,19 @@ def main():
     result = subprocess.run(cmd, cwd=Path(__file__).parent)
 
     if result.returncode == 0:
-        distribution_folder = Path("T38 PlanAid Distribution")
+        # Always resolve paths relative to this script's directory
+        script_dir = Path(__file__).resolve().parent
+        distribution_folder = script_dir / "T38 PlanAid Distribution"
         exe_path = distribution_folder / "T38_PlanAid.exe"
 
         # Copy wb_list.xlsx to the distribution folder so the exe is always accompanied by the latest Excel data.
-        wb_list_src = Path("wb_list.xlsx")
+        wb_list_src = script_dir / "wb_list.xlsx"
         wb_list_dst = distribution_folder / "wb_list.xlsx"
         if wb_list_src.exists():
             shutil.copy2(wb_list_src, wb_list_dst)
             print(f"Copied wb_list.xlsx to distribution folder")
         else:
-            print(f"Warning: wb_list.xlsx not found in source directory")
+            print(f"Warning: wb_list.xlsx not found in {wb_list_src}")
         print(f"\nBuild successful!")
         print(f"Executable: {exe_path.absolute()}")
         print(f"\nDistribution folder ready: {distribution_folder.absolute()}")
