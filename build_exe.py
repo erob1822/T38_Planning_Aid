@@ -28,22 +28,29 @@ def main():
     script_dir = Path(__file__).parent.resolve()
 
 
-    # Ensure all required packages are installed
+    # Ensure all required packages are installed (requirements.txt and pip itself)
     requirements_file = script_dir / 'requirements.txt'
+    print("Ensuring pip is up to date...")
+    subprocess.check_call([sys.executable, "-m", "pip", "install", "--upgrade", "pip"])
     if requirements_file.exists():
         print("Installing required packages from requirements.txt...")
         subprocess.check_call([sys.executable, "-m", "pip", "install", "-r", str(requirements_file)])
     else:
         print("Warning: requirements.txt not found. Skipping requirements installation.")
 
-
-    # Ensure all required packages are installed from requirements.txt
-    requirements_file = script_dir / 'requirements.txt'
-    if requirements_file.exists():
-        print("Installing required packages from requirements.txt...")
-        subprocess.check_call([sys.executable, "-m", "pip", "install", "-r", str(requirements_file)])
-    else:
-        print("Warning: requirements.txt not found. Skipping requirements installation.")
+    # Try to import each dependency and install if missing
+    import importlib
+    with open(requirements_file) as reqf:
+        for line in reqf:
+            pkg = line.strip()
+            if not pkg or pkg.startswith('#'):
+                continue
+            mod = pkg.split('==')[0].replace('-', '_')
+            try:
+                importlib.import_module(mod)
+            except ImportError:
+                print(f"Installing missing dependency: {pkg}")
+                subprocess.check_call([sys.executable, "-m", "pip", "install", pkg])
 
     # Ensure PyInstaller is installed
     try:
@@ -90,14 +97,17 @@ def main():
         distribution_folder = script_dir / "T38 PlanAid Distribution"
         exe_path = distribution_folder / "T38_PlanAid.exe"
 
-        # Copy wb_list.xlsx to the distribution folder so the exe is always accompanied by the latest Excel data.
-        wb_list_src = script_dir / "wb_list.xlsx"
+        # Find wb_list.xlsx anywhere in the project (root or subfolders)
+        wb_list_src = None
+        for p in script_dir.rglob('wb_list.xlsx'):
+            wb_list_src = p
+            break
         wb_list_dst = distribution_folder / "wb_list.xlsx"
-        if wb_list_src.exists():
+        if wb_list_src and wb_list_src.exists():
             shutil.copy2(wb_list_src, wb_list_dst)
-            print(f"Copied wb_list.xlsx to distribution folder")
+            print(f"Copied wb_list.xlsx from {wb_list_src} to distribution folder")
         else:
-            print(f"Warning: wb_list.xlsx not found in {wb_list_src}")
+            print(f"Warning: wb_list.xlsx not found in project directory tree.")
         print(f"\nBuild successful!")
         print(f"Executable: {exe_path.absolute()}")
         print(f"\nDistribution folder ready: {distribution_folder.absolute()}")

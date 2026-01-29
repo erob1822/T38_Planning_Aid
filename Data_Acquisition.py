@@ -8,11 +8,11 @@ Purpose:
 Data Sources (URLs from cfg object):
     1. AOD Flight API - cfg.aod_flights_api (NASA API)
     2. AOD Comments - cfg.aod_comments_url (Google Sheet, downloaded as CSV)
-    3. FAA NASR - cfg.nasr_file_finder (28-day cycle, airport/runway data)
+    3. FAA NFDC - cfg.nasr_file_finder (28-day cycle, airport/runway data)
     4. DLA Fuel - cfg.dla_fuel_download (contract fuel data)
 
 Output:
-    - DATA/apt_data/APT_BASE.csv, APT_RWY.csv, APT_RWY_END.csv (from FAA NASR)
+    - DATA/apt_data/APT_BASE.csv, APT_RWY.csv, APT_RWY_END.csv (from FAA NFDC)
     - DATA/fuel_data.csv (from DLA)
     - DATA/flights_data.csv (from NASA API)
     - DATA/comments_data.csv (from Google Sheet)
@@ -103,7 +103,7 @@ class DataAcquisition:
             with open(self.cache_file, 'w') as f:
                 json.dump(self.cache, f, indent=2)
         except Exception as e:
-            logger.warning(f"Failed to save cache: {e}")
+            pass  # Silenced: Failed to save cache
 
     def update_wb_list(self) -> bool:
         """
@@ -116,8 +116,7 @@ class DataAcquisition:
         try:
             import openpyxl
             wb_path = self.cfg.app_dir / 'wb_list.xlsx'
-            # Prompt user to close Excel file FIRST
-            input(f"Please ensure '{wb_path}' is closed before continuing. Press Enter to proceed...")
+            # Prompt removed: now handled at the start of the process
             sheet_name = 'kml data'
             header_row = 1
             # Try opening workbook, retry if file is locked
@@ -149,7 +148,7 @@ class DataAcquisition:
                 # Validate columns
                 for h in selected_headers:
                     if h not in flights_df.columns:
-                        logger.warning(f"Column '{h}' missing in flights_data.csv.")
+                        pass  # Silenced: Column missing in flights_data.csv.
                 # Clear existing data below headers
                 for header in selected_headers:
                     col = headers.get(header.upper())
@@ -346,12 +345,12 @@ class DataAcquisition:
         except Exception:
             return False
     
-    # FAA NASR DATA (Airport/Runway)
+    # FAA NFDC DATA (Airport/Runway)
     # Uses cfg.nasr_file_finder to download and extract official FAA airport/runway CSVs.
     
     def download_nasr(self) -> bool:
         """
-        Download FAA NASR data (Airport, Runway, Runway End CSVs).
+        Download FAA NFDC data (Airport, Runway, Runway End CSVs).
         - Uses cfg.nasr_file_finder to get download URL
         - Downloads and extracts required CSVs to DATA/apt_data/
         - Handles nested ZIP structure in NASR download
@@ -373,7 +372,7 @@ class DataAcquisition:
             with tempfile.TemporaryDirectory() as tmpdir:
                 zip_path = Path(tmpdir) / "nasr_data.zip"
                 
-                nasr_desc = "Downloading FAA National Airspace System Resources (NASR) dataset"
+                nasr_desc = "Downloading FAA National Flight Data Center (NFDC) dataset"
                 response = self.session.get(download_url, stream=True, timeout=120)
                 response.raise_for_status()
                 total_size = int(response.headers.get('content-length', 0))
@@ -677,6 +676,9 @@ def run(cfg):
     # Defensive: ensure cache attribute exists
     if not hasattr(da, 'cache'):
         da.cache = {}
+    # Prompt user to close Excel FIRST
+    wb_path = da.cfg.app_dir / 'wb_list.xlsx'
+    input(f"Please ensure '{wb_path}' is closed before continuing. Press Enter to proceed...")
     da.run_all()
     # Update wb_list.xlsx with latest data
     da.update_wb_list()
