@@ -27,6 +27,24 @@ def main():
     # Get the directory where this script is located
     script_dir = Path(__file__).parent.resolve()
 
+
+    # Ensure all required packages are installed
+    requirements_file = script_dir / 'requirements.txt'
+    if requirements_file.exists():
+        print("Installing required packages from requirements.txt...")
+        subprocess.check_call([sys.executable, "-m", "pip", "install", "-r", str(requirements_file)])
+    else:
+        print("Warning: requirements.txt not found. Skipping requirements installation.")
+
+
+    # Ensure all required packages are installed from requirements.txt
+    requirements_file = script_dir / 'requirements.txt'
+    if requirements_file.exists():
+        print("Installing required packages from requirements.txt...")
+        subprocess.check_call([sys.executable, "-m", "pip", "install", "-r", str(requirements_file)])
+    else:
+        print("Warning: requirements.txt not found. Skipping requirements installation.")
+
     # Ensure PyInstaller is installed
     try:
         import PyInstaller
