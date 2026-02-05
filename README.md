@@ -38,6 +38,7 @@ Output: `T38 Apts {date}.kml` - usable in foreflight.
 | `T38_PlanAid_E.py` | Master script - run this. Contains all config (URLs, version, paths) |
 | `Data_Acquisition.py` | Downloads data from AOD, FAA, DLA APIs |
 | `KML_Generator.py` | Builds airport database and generates KML |
+| `MissionBriefGenerator.py` | Interactive tool to create mission briefing sheets |
 | `wb_list.xlsx` | Blacklist, whitelist, categories, comments, recent landings |
 
 ## Quick modifications for other use cases
@@ -57,6 +58,29 @@ Output: `T38 Apts {date}.kml` - usable in foreflight.
 - **Green**: Recently landed by T-38 - known to work  
 - **Red diamond**: Category 2/3 - extra planning required
 - **Red circle**: Category 1 - T-38 ops prohibited
+
+## Mission Brief Generator (NEW!)
+
+Generate formatted mission briefing sheets for T-38 cross-country flights:
+
+```bash
+python MissionBriefGenerator.py
+```
+
+This interactive tool:
+- Prompts for departure, destination, and alternate airports
+- Pulls data from the generated airport database
+- Creates formatted briefing sheets with:
+  - Airport coordinates and runway information
+  - JASU (air start cart) availability
+  - Contract fuel status
+  - Recent T-38 operations history
+  - Category warnings and restrictions
+  - Pilot notes and comments
+  - Estimated flight time and distance
+- Saves briefings as text files in `KML_Output/`
+
+**Requirements**: Run `T38_PlanAid_E.py` first to generate the airport database.
 
 ## Dependencies
 

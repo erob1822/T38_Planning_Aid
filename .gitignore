@@ -124,3 +124,7 @@ T38 PlanAid Distribution/DATA/data_acquisition_summary.json
 T38 PlanAid Distribution/KML_Output/logfile.log
 T38 PlanAid Distribution/KML_Output/T38 Apts 29 Jan 2026freshhhhhhh.kml
 T38 PlanAid Distribution/logs/data_acquisition_20260129_165130.log
+KML_Output/MissionBrief_*.txt
+KML_Output/T38_masterdict.xlsx
+test_mission_brief.py
+__pycache__/
