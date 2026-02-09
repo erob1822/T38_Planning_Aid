@@ -100,16 +100,24 @@ jobs:
           name: ${{ matrix.zip_name }}
           path: ${{ matrix.zip_name }}
 
-      # --- Extract version and short SHA for the release tag ---
+      # --- Auto-increment version: Version3.0.1, Version3.0.2, etc. ---
       - name: Get version info
         id: version
         shell: bash
         run: |
-          VERSION=$(python -c "import re, pathlib; m=re.search(r\"version.*=.*'([^']+)'\", pathlib.Path('T38_PlanAid.py').read_text()); print(m.group(1).replace(' ',''))" 2>/dev/null || echo "v0.0")
-          SHORT_SHA=${GITHUB_SHA::7}
-          TAG="${VERSION}-${SHORT_SHA}"
+          # Read base version from source (e.g. "Version 3.0" -> "Version3.0")
+          BASE=$(python -c "import re, pathlib; m=re.search(r\"version.*=.*'([^']+)'\", pathlib.Path('T38_PlanAid.py').read_text()); print(m.group(1).replace(' ',''))" 2>/dev/null || echo "v0.0")
+          # Find highest existing patch for this base version
+          git fetch --tags
+          LATEST=$(git tag -l "${BASE}.*" | sort -t. -k3 -n | tail -1)
+          if [ -z "$LATEST" ]; then
+            PATCH=1
+          else
+            PATCH=$(( ${LATEST##*.} + 1 ))
+          fi
+          TAG="${BASE}.${PATCH}"
           echo "tag=$TAG" >> "$GITHUB_OUTPUT"
-          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "version=$BASE" >> "$GITHUB_OUTPUT"
 
       # Attach to an existing manually-published release
       - name: Attach to manual Release
@@ -127,8 +135,7 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ steps.version.outputs.tag }}
-          name: "T-38 Planning Aid ${{ steps.version.outputs.version }} (${{ steps.version.outputs.tag }})"
-          body: "Automated build from commit ${{ github.sha }}"
+          name: "T-38 Planning Aid ${{ steps.version.outputs.tag }}"
           generate_release_notes: true
           make_latest: true
           files: |
