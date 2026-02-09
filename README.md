@@ -115,34 +115,6 @@ Install via `pip install -r requirements.txt`. Key packages: `pandas`, `simplekm
 - **URL Changes**: If FAA or DLA URLs change, update the endpoints in `T38_PlanAid.py` → `AppConfig` class variables.
 - **API Issues**: Contact AOD IT if API paths are down or outdated. Update the relevant URL in `T38_PlanAid.py` → `AppConfig`.
 
-## Contact Info and Attributions
-
-### RPL Military Interns (Authors / Developers)
-
-- Nicholas Bostock [API scraping and AOD integration]
-- Jacob Cates [Scraping websites and downloading/packaging data]
-- Alex Clark, +1(469) 406-8546 (POC AUG2024)
-- Alec Engl, +1(727) 488-0507 aengl5337@gmail.com (POC NOV2025)
-- Ignatius Liberto, 757-373-8787, ignatiusliberto@gmail.com (POC NOV2024) [AFD Scraping, data harvesting, LDA logic, KML Generation]
-- Adrien Richez, +1(678) 788-4015, adrichez24@gmail.com (POC SEP2024) [API scraping and AOD integration]
-- Evan Robertson +1 (410) 507-6109, erob1822@gmail.com (POC FEB2026) [.exe generation and v3.0 integration]
-- James Zuzelski, +1(248) 930-3461, (POC JUN2024)
-
-### CB / AOD POCs
-
-- Sean Brady
-- Dan Cochran
-- Luke Delaney
-- Jonny Kim
-
-
-
-
-
-
-
-A note on automated builds for Mac and PC
-
 ## Automated Release Builds (GitHub Actions)
 
 The repo includes a GitHub Actions workflow (`.github/workflows/build-release.yml`) that automatically builds standalone executables for **both Windows and Mac** whenever a new release is published.
@@ -165,3 +137,25 @@ Go to [Releases](https://github.com/erob1822/T38_Planning_Aid/releases), downloa
 ### Manual trigger
 
 You can also trigger a build manually without creating a release: go to the repo's **Actions** tab → **Build Release** → **Run workflow**. This is useful for testing the build without publishing a release.
+
+
+## Contact Info and Attributions
+
+### RPL Military Interns (Authors / Developers)
+
+- Nicholas Bostock [API scraping and AOD integration]
+- Jacob Cates [Scraping websites and downloading/packaging data]
+- Alex Clark, +1(469) 406-8546 (POC AUG2024)
+- Alec Engl, +1(727) 488-0507 aengl5337@gmail.com (POC NOV2025)
+- Ignatius Liberto, 757-373-8787, ignatiusliberto@gmail.com (POC NOV2024) [AFD Scraping, data harvesting, LDA logic, KML Generation]
+- Adrien Richez, +1(678) 788-4015, adrichez24@gmail.com (POC SEP2024) [API scraping and AOD integration]
+- Evan Robertson +1 (410) 507-6109, erob1822@gmail.com (POC FEB2026) [.exe generation and v3.0 integration]
+- James Zuzelski, +1(248) 930-3461, (POC JUN2024)
+
+### CB / AOD POCs
+
+- Sean Brady
+- Dan Cochran
+- Luke Delaney
+- Jonny Kim
+
