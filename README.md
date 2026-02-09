@@ -47,7 +47,7 @@ T38 Planning Aid/
 └── wb_list.xlsx                                        ← editable airport lists
 ```
 
-- Open the `.kml` in **ForeFlight**, **Google Earth**, or [KMZViewer.com](https://kmzviewer.com)
+- Open the `.kml` in **ForeFlight**, **Google Earth**, or [KMZViewer.com](https://kmzview.com)
 - The interactive `.html` map auto-opens in your browser after each run
 
 ## For Development

@@ -236,7 +236,7 @@ if __name__ == "__main__":
     if kml_files:
         latest_kml = max(kml_files, key=lambda f: f.stat().st_mtime)
         print(f"\n{'=' * 60}")
-        print(f"KML output [can be opened in Google Earth/Foreflight/KMZviewer.com]: {latest_kml.resolve()}")
+        print(f"KML output [can be opened in Google Earth/Foreflight/KMZview.com]: {latest_kml.resolve()}")
         print(f"{'=' * 60}")
 
     # Open interactive map in default browser
