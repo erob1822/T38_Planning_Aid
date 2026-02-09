@@ -24,6 +24,8 @@ This is an updated version of the main T38 PlanAid with changes made to increase
 
 On first run the exe downloads all data automatically and creates a `T38 Planning Aid/` folder next to itself. Subsequent runs reuse cached data if the folder is kept alongside the exe.
 
+Note: Windows doesn't seem to want to trust that download. If you can't get the .exe to download and run, you'll have to download the whole repository and run the 'build_exe.py" file on a computer with python installed.
+
 ## Output
 
 All output goes into a `T38 Planning Aid/` folder created next to the exe:
