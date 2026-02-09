@@ -1,0 +1,101 @@
+# Build and attach Windows + Mac executables to GitHub Releases
+# 
+# HOW TO USE:
+#   1. Push your code to main
+#   2. Go to your repo on GitHub → Releases → "Draft a new release"
+#   3. Click "Choose a tag" → type a new tag like v1.0 → "Create new tag"
+#   4. Give it a title (e.g., "T-38 Planning Aid v1.0")
+#   5. Add release notes if you want
+#   6. Click "Publish release"
+#   7. This workflow runs automatically and attaches the Windows .exe and Mac binary
+#
+# You can also trigger this manually from Actions → Build Release → Run workflow
+
+name: Build Release
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:  # Allows manual trigger from GitHub Actions tab
+
+jobs:
+  build:
+    strategy:
+      matrix:
+        include:
+          - os: windows-latest
+            artifact_name: "T-38 Planning Aid.exe"
+            zip_name: "T38-PlanAid-Windows.zip"
+            separator: ";"
+          - os: macos-latest
+            artifact_name: "T-38 Planning Aid"
+            zip_name: "T38-PlanAid-Mac.zip"
+            separator: ":"
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install pyinstaller
+
+      - name: Build executable
+        run: |
+          pyinstaller --onefile --name "T-38 Planning Aid" --hidden-import=fitz --hidden-import=pandas --hidden-import=openpyxl --hidden-import=simplekml --hidden-import=folium --hidden-import=requests --hidden-import=requests_ntlm --hidden-import=spnego --collect-all fitz --add-data "wb_list.xlsx${{ matrix.separator }}." T38_PlanAid.py
+
+      # Note: sspilib is Windows-only (NTLM via Windows SSPI). On Mac, requests_ntlm
+      # falls back to pure-Python NTLM which works fine with empty credentials.
+
+      - name: Install sspilib (Windows only)
+        if: runner.os == 'Windows'
+        run: |
+          pip install sspilib
+          pyinstaller --onefile --name "T-38 Planning Aid" --icon RPLLogo.ico --hidden-import=fitz --hidden-import=pandas --hidden-import=openpyxl --hidden-import=simplekml --hidden-import=folium --hidden-import=requests --hidden-import=requests_ntlm --hidden-import=spnego --hidden-import=sspilib --collect-all fitz --collect-all sspilib --add-data "wb_list.xlsx;." T38_PlanAid.py
+
+      - name: Prepare distribution folder
+        shell: bash
+        run: |
+          mkdir -p "T38 PlanAid Distribution/T38 Planning Aid"
+          cp "dist/${{ matrix.artifact_name }}" "T38 PlanAid Distribution/"
+          if [ -f wb_list.xlsx ]; then
+            cp wb_list.xlsx "T38 PlanAid Distribution/T38 Planning Aid/"
+          fi
+          if [ -d DATA ]; then
+            cp -r DATA "T38 PlanAid Distribution/T38 Planning Aid/"
+          fi
+
+      - name: Create ZIP
+        shell: bash
+        run: |
+          cd "T38 PlanAid Distribution"
+          if command -v zip &> /dev/null; then
+            zip -r "../${{ matrix.zip_name }}" .
+          else
+            python -c "
+          import shutil
+          shutil.make_archive('../${{ matrix.zip_name }}'.replace('.zip',''), 'zip', '.')
+          "
+          fi
+
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.zip_name }}
+          path: ${{ matrix.zip_name }}
+
+      # Attach to the GitHub Release (only runs when triggered by a release)
+      - name: Attach to Release
+        if: github.event_name == 'release'
+        uses: softprops/action-gh-release@v2
+        with:
+          files: ${{ matrix.zip_name }}
