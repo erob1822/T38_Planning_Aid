@@ -89,10 +89,14 @@ jobs:
           "
           fi
 
-      - name: Rename Mac executable
-        if: runner.os == 'macOS'
+      - name: Rename release assets (no spaces = clean GitHub filenames)
         shell: bash
-        run: cp "dist/T-38 Planning Aid" "dist/T-38 Planning Aid (Mac)"
+        run: |
+          if [ "$RUNNER_OS" = "Windows" ]; then
+            cp "dist/T-38 Planning Aid.exe" "dist/T38-Planning-Aid.exe"
+          else
+            cp "dist/T-38 Planning Aid" "dist/T38-Planning-Aid-Mac"
+          fi
 
       - name: Upload build artifact
         uses: actions/upload-artifact@v4
@@ -134,8 +138,7 @@ jobs:
         with:
           files: |
             ${{ matrix.zip_name }}
-            dist/${{ matrix.artifact_name }}
-            ${{ runner.os == 'macOS' && 'dist/T-38 Planning Aid (Mac)' || '' }}
+            ${{ runner.os == 'Windows' && 'dist/T38-Planning-Aid.exe' || 'dist/T38-Planning-Aid-Mac' }}
 
       # Auto-create a new release on push to main
       - name: Auto-create Release
@@ -148,5 +151,4 @@ jobs:
           make_latest: true
           files: |
             ${{ matrix.zip_name }}
-            dist/${{ matrix.artifact_name }}
-            ${{ runner.os == 'macOS' && 'dist/T-38 Planning Aid (Mac)' || '' }}
+            ${{ runner.os == 'Windows' && 'dist/T38-Planning-Aid.exe' || 'dist/T38-Planning-Aid-Mac' }}
