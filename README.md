@@ -19,9 +19,9 @@ This is an updated version of the main T38 PlanAid with changes made to increase
 ## Getting the Planning Aid (Easiest Way)
 
 1. Go to the [**Releases**](https://github.com/erob1822/T38PlanAid_EvansVersion/releases) page
-2. Download the ZIP for your operating system:
-   - **Windows**: `T38-PlanAid-Windows.zip`
-   - **Mac**: `T38-PlanAid-Mac.zip`
+1. Download the ZIP for your operating system:
+   - **Windows**: [**T38-PlanAid-Windows.zip**](https://github.com/erob1822/T38PlanAid_EvansVersion/releases/latest/download/T38-PlanAid-Windows.zip)
+   - **Mac**: [**T38-PlanAid-Mac.zip**](https://github.com/erob1822/T38PlanAid_EvansVersion/releases/latest/download/T38-PlanAid-Mac.zip)
 3. Extract the ZIP to a folder of your choice
 4. Run the executable (`T-38 Planning Aid.exe` on Windows, `T-38 Planning Aid` on Mac)
 
