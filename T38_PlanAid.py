@@ -241,6 +241,15 @@ if __name__ == "__main__":
 
     # Open interactive map in default browser
     if map_path and map_path.exists():
+        print(f"\n{'=' * 60}")
+        print("MAP PIN LEGEND:")
+        print(f"{'-' * 60}")
+        print("  BLUE   - JASU listed, no recent ops — good to go")
+        print("  GREEN  - Recently landed by T-38 (or whitelisted)")
+        print("  ORANGE - No JASU listed — call FBO to verify cart")
+        print("  RED (warning) - Category 2/3 — extra planning req'd")
+        print("  RED (ban)     - Category 1 — T-38 ops prohibited")
+        print(f"{'=' * 60}")
         print(f"\nOpening interactive map in browser...")
         webbrowser.open(map_path.resolve().as_uri())
 
