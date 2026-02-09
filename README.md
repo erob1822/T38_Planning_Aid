@@ -18,12 +18,10 @@ This is an updated version of the main T38 PlanAid with changes made to increase
 
 ## Getting the Planning Aid (Easiest Way)
 
-1. Go to the [**Releases**](https://github.com/erob1822/T38PlanAid_EvansVersion/releases) page
-1. Download the ZIP for your operating system:
-   - **Windows**: [**T38-PlanAid-Windows.zip**](https://github.com/erob1822/T38PlanAid_EvansVersion/releases/latest/download/T38-PlanAid-Windows.zip)
-   - **Mac**: [**T38-PlanAid-Mac.zip**](https://github.com/erob1822/T38PlanAid_EvansVersion/releases/latest/download/T38-PlanAid-Mac.zip)
-3. Extract the ZIP to a folder of your choice
-4. Run the executable (`T-38 Planning Aid.exe` on Windows, `T-38 Planning Aid` on Mac)
+1. Download the executable for your operating system:
+   - **Windows**: [**T-38 Planning Aid.exe**](https://github.com/erob1822/T38PlanAid_EvansVersion/releases/latest/download/T-38.Planning.Aid.exe)
+   - **Mac**: [**T-38 Planning Aid (Mac)**](https://github.com/erob1822/T38PlanAid_EvansVersion/releases/latest/download/T-38.Planning.Aid.%28Mac%29)
+2. Place it in a folder of your choice and run it
 
 No install or Python required. On first run the app downloads all data automatically and creates a `T38 Planning Aid/` folder next to itself. Subsequent runs reuse cached data if the folder is kept alongside the executable.
 

@@ -90,6 +90,12 @@ jobs:
           "
           fi
 
+      # Rename Mac binary to include .app-like extension so users know what it is
+      - name: Rename Mac executable
+        if: runner.os == 'macOS'
+        shell: bash
+        run: cp "dist/T-38 Planning Aid" "dist/T-38 Planning Aid (Mac)"
+
       - name: Upload build artifact
         uses: actions/upload-artifact@v4
         with:
@@ -101,4 +107,7 @@ jobs:
         if: github.event_name == 'release'
         uses: softprops/action-gh-release@v2
         with:
-          files: ${{ matrix.zip_name }}
+          files: |
+            ${{ matrix.zip_name }}
+            dist/${{ matrix.artifact_name }}
+            ${{ runner.os == 'macOS' && 'dist/T-38 Planning Aid (Mac)' || '' }}
