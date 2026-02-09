@@ -18,16 +18,13 @@ This is an updated version of the main T38 PlanAid with changes made to increase
 
 ## Getting the Planning Aid (Easiest Way)
 
-1. Download the executable for your operating system:
-   - **Windows**: [**T-38 Planning Aid.exe**](https://github.com/erob1822/T38_Planning_Aid/releases/latest/download/T38-Planning-Aid.exe)
-   - **Mac**: [**T-38 Planning Aid (Mac)**](https://github.com/erob1822/T38_Planning_Aid/releases/latest/download/T38-Planning-Aid-Mac)
-2. Place it in a folder of your choice and run it
+1. Go to the [latest release](https://github.com/erob1822/T38_Planning_Aid/releases/latest) and download the ZIP for your operating system:
+   - **Windows**: [**T38-PlanAid-Windows.zip**](https://github.com/erob1822/T38_Planning_Aid/releases/latest/download/T38-PlanAid-Windows.zip)
+   - **Mac**: [**T38-PlanAid-Mac.zip**](https://github.com/erob1822/T38_Planning_Aid/releases/latest/download/T38-PlanAid-Mac.zip)
+2. Extract the ZIP to a folder of your choice
+3. Run `T-38 Planning Aid.exe` (Windows) or `T-38 Planning Aid` (Mac) from inside the extracted folder
 
 No install or Python required. On first run the app downloads all data automatically and creates a `T38 Planning Aid/` folder next to itself. Subsequent runs reuse cached data if the folder is kept alongside the executable.
-
-If you can't get the download to work (windows does not tend to trust this exe), you can download the whole project as a .zip file and run `python build_exe.py` on a computer with Python installed, or just run `python T38_PlanAid.py` directly.
-
-> **Windows users:** Your browser or SmartScreen may flag the download as unsafe. Right-click the download → **Keep** → **Keep anyway**. This happens because the executable is not code-signed, not because it contains malware.
 
 > **Mac users:** You may see an "unidentified developer" warning. Right-click the app → **Open** → click **Open** again. This is a one-time step.
 
