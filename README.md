@@ -19,14 +19,19 @@ This is an updated version of the main T38 PlanAid with changes made to increase
 ## Getting the Planning Aid (Easiest Way)
 
 1. Go to the [**Releases**](https://github.com/erob1822/T38PlanAid_EvansVersion/releases) page
-2. Download `T-38 Planning Aid.exe` from the latest release
-3. Double-click it — no install, no Python, no other files needed
+2. Download the ZIP for your operating system:
+   - **Windows**: `T38-PlanAid-Windows.zip`
+   - **Mac**: `T38-PlanAid-Mac.zip`
+3. Extract the ZIP to a folder of your choice
+4. Run the executable (`T-38 Planning Aid.exe` on Windows, `T-38 Planning Aid` on Mac)
 
-On first run the exe downloads all data automatically and creates a `T38 Planning Aid/` folder next to itself. Subsequent runs reuse cached data if the folder is kept alongside the exe.
+No install or Python required. On first run the app downloads all data automatically and creates a `T38 Planning Aid/` folder next to itself. Subsequent runs reuse cached data if the folder is kept alongside the executable.
 
-Note: Windows doesn't seem to want to trust that download. If it gives you a warning message, right click the download and press "Keep", and then "Keep anyway" on a dropdown menu on the next popup screen.
+> **Windows users:** Your browser or SmartScreen may flag the download as unsafe. Right-click the download → **Keep** → **Keep anyway**. This happens because the executable is not code-signed, not because it contains malware.
 
-If you can't get the .exe to download and run, you'll have to download the whole repository and run the 'build_exe.py" file on a computer with python installed.
+> **Mac users:** You may see an "unidentified developer" warning. Right-click the app → **Open** → click **Open** again. This is a one-time step.
+
+If you can't get the download to work, you can clone the repo and run `python build_exe.py` on a computer with Python installed, or just run `python T38_PlanAid.py` directly.
 
 ## Output
 
