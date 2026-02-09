@@ -1,25 +1,24 @@
-# Build and attach Windows + Mac executables to GitHub Releases
-# 
-# HOW TO USE:
-#   1. Push your code to main
-#   2. Go to your repo on GitHub → Releases → "Draft a new release"
-#   3. Click "Choose a tag" → type a new tag like v1.0 → "Create new tag"
-#   4. Give it a title (e.g., "T-38 Planning Aid v1.0")
-#   5. Add release notes if you want
-#   6. Click "Publish release"
-#   7. This workflow runs automatically and attaches the Windows .exe and Mac binary
+# Build and auto-release Windows + Mac executables on every push to main.
 #
-# You can also trigger this manually from Actions → Build Release → Run workflow
+# Every push to main auto-creates a new versioned GitHub Release
+# (version read from T38_PlanAid.py AppConfig.version).
+# The README download links point to /releases/latest/download/ so they
+# always resolve to the newest build.
+#
+# Can also be triggered manually from Actions → Build Release → Run workflow,
+# or by publishing a release manually.
 
 name: Build Release
 
 on:
+  push:
+    branches: [main]
   release:
     types: [published]
-  workflow_dispatch:  # Allows manual trigger from GitHub Actions tab
+  workflow_dispatch:
 
 permissions:
-  contents: write  # Required to attach files to GitHub Releases
+  contents: write
 
 jobs:
   build:
@@ -59,7 +58,7 @@ jobs:
       # Note: sspilib is Windows-only (NTLM via Windows SSPI). On Mac, requests_ntlm
       # falls back to pure-Python NTLM which works fine with empty credentials.
 
-      - name: Install sspilib (Windows only)
+      - name: Install sspilib and rebuild (Windows only)
         if: runner.os == 'Windows'
         run: |
           pip install sspilib
@@ -90,7 +89,6 @@ jobs:
           "
           fi
 
-      # Rename Mac binary to include .app-like extension so users know what it is
       - name: Rename Mac executable
         if: runner.os == 'macOS'
         shell: bash
@@ -102,11 +100,37 @@ jobs:
           name: ${{ matrix.zip_name }}
           path: ${{ matrix.zip_name }}
 
-      # Attach to the GitHub Release (only runs when triggered by a release)
-      - name: Attach to Release
+      # --- Extract version and short SHA for the release tag ---
+      - name: Get version info
+        id: version
+        shell: bash
+        run: |
+          VERSION=$(python -c "import re, pathlib; m=re.search(r\"version.*=.*'([^']+)'\", pathlib.Path('T38_PlanAid.py').read_text()); print(m.group(1).replace(' ',''))" 2>/dev/null || echo "v0.0")
+          SHORT_SHA=${GITHUB_SHA::7}
+          TAG="${VERSION}-${SHORT_SHA}"
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+
+      # Attach to an existing manually-published release
+      - name: Attach to manual Release
         if: github.event_name == 'release'
         uses: softprops/action-gh-release@v2
         with:
+          files: |
+            ${{ matrix.zip_name }}
+            dist/${{ matrix.artifact_name }}
+            ${{ runner.os == 'macOS' && 'dist/T-38 Planning Aid (Mac)' || '' }}
+
+      # Auto-create a new release on push to main
+      - name: Auto-create Release
+        if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.version.outputs.tag }}
+          name: "T-38 Planning Aid ${{ steps.version.outputs.version }} (${{ steps.version.outputs.tag }})"
+          body: "Automated build from commit ${{ github.sha }}"
+          generate_release_notes: true
+          make_latest: true
           files: |
             ${{ matrix.zip_name }}
             dist/${{ matrix.artifact_name }}
