@@ -76,7 +76,7 @@ class AppConfig:
     """
     
     # MODIFY: version - update this for each release, shown on KML pin within the Gulf of America.
-    version: ClassVar[str] = 'Version 3.0 (Evans Edition)'
+    version: ClassVar[str] = 'Version 3.0'
 
     # AOD sources
     aod_flights_api: ClassVar[str] = 'https://ndjsammweb.ndc.nasa.gov/Flightmetrics/api/cbdata/t38airports'

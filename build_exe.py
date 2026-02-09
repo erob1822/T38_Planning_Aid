@@ -82,7 +82,10 @@ def main():
         "--hidden-import=simplekml",
         "--hidden-import=requests",
         "--hidden-import=requests_ntlm",
+        "--hidden-import=spnego",
+        "--hidden-import=sspilib",
         "--collect-all", "fitz",        # Collect all PyMuPDF files
+        "--collect-all", "sspilib",     # Collect SSPI native bindings for NTLM auth
         "T38_PlanAid.py"              # Entry point
     ]
 
