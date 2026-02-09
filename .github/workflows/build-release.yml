@@ -18,6 +18,9 @@ on:
     types: [published]
   workflow_dispatch:  # Allows manual trigger from GitHub Actions tab
 
+permissions:
+  contents: write  # Required to attach files to GitHub Releases
+
 jobs:
   build:
     strategy:
