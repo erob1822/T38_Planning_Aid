@@ -284,7 +284,7 @@ def create_kml_styles() -> dict[str, Style]:
     return styles
 
 
-def generate_kml(master_dict: Dict, wb: Dict, date_str: str, version: str, exp_str: str = "") -> int:
+def generate_kml(master_dict: dict, wb: dict, date_str: str, version: str, exp_str: str = "") -> int:
     """
     Generate KML file with color-coded airport pins.
     
@@ -409,7 +409,7 @@ _PIN_COLORS = {
     'yellow': 'orange',   # folium has no yellow; orange is closest
 }
 
-def generate_map(master_dict: Dict, date_str: str, exp_str: str = "") -> Path:
+def generate_map(master_dict: dict, date_str: str, exp_str: str = "") -> Path:
     """
     Generate an interactive HTML map with color-coded airport markers.
 
