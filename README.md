@@ -20,8 +20,8 @@ Download this repository as a .zip file and extract the contents.
 
 Either double click `T38_PlanAid.exe` or open a command window and type:
 
-```
->> T38_PlanAid.exe
+```cmd
+T38_PlanAid.exe
 ```
 
 The generated `.kml` file will appear in the `KML_Output/` folder.
@@ -30,8 +30,8 @@ The generated `.kml` file will appear in the `KML_Output/` folder.
 
 To create a standalone `.exe` for distribution (after downloading and extracting the zip file), open a terminal prompt, navigate to the correct folder and type:
 
-```
->> python build_exe.py
+```cmd
+python build_exe.py
 ```
 
 Or, with python installed, just double clink on build_exe.py.
@@ -47,9 +47,9 @@ Zip and distribute the `T38 PlanAid Distribution/` folder. Pilots just double-cl
 
 ## Quick Start (For Development)
 
-```
->> pip install -r requirements.txt
->> python T38_PlanAid.py
+```cmd
+pip install -r requirements.txt
+python T38_PlanAid.py
 ```
 
 Output: `T38 Apts {date}.kml` - usable in foreflight.
