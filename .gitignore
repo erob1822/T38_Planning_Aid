@@ -45,7 +45,6 @@ build/T38_PlanAid/localpycs/pyimod04_pywin32.pyc
 build/T38_PlanAid/localpycs/struct.pyc
 T38 PlanAid Distribution/wb_list.xlsx
 T38 PlanAid Distribution/DATA/comments_data.csv
-T38_PlanAid.exe
 T38 PlanAid Distribution/DATA/flights_data.csv
 T38 PlanAid Distribution/DATA/jasu_data.csv
 T38 PlanAid Distribution/DATA/fuel_data.csv
@@ -62,7 +61,6 @@ T38 PlanAid Distribution/DATA/apt_data/APT_BASE.csv
 T38 PlanAid Distribution/DATA/apt_data/APT_RWY_END.csv
 T38 PlanAid Distribution/DATA/apt_data/APT_RWY.csv
 T38 PlanAid Distribution/KML_Output/T38 Apts 28 Jan 2026.kml
-T38_PlanAid.exe
 Alec/T38_PlanAid_COPY-main/.gitignore
 Alec/T38_PlanAid_COPY-main/API_Scraper.py
 Alec/T38_PlanAid_COPY-main/Data_Downloader.py

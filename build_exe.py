@@ -121,6 +121,12 @@ def main():
         else:
             print(f"Warning: DATA folder not found in project directory.")
 
+        # Copy exe to the project root so it's visible when unzipping
+        exe_root_copy = script_dir / "T38_PlanAid.exe"
+        if exe_path.exists():
+            shutil.copy2(exe_path, exe_root_copy)
+            print(f"Copied T38_PlanAid.exe to project root: {exe_root_copy.absolute()}")
+
         print(f"\nBuild successful!")
         print(f"Executable: {exe_path.absolute()}")
         print(f"\nDistribution folder ready: {distribution_folder.absolute()}")
