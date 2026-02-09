@@ -106,7 +106,14 @@ jobs:
         shell: bash
         run: |
           # Read base version from source (e.g. "Version 3.0" -> "Version3.0")
-          BASE=$(python -c "import re, pathlib; m=re.search(r\"version.*=.*'([^']+)'\", pathlib.Path('T38_PlanAid.py').read_text()); print(m.group(1).replace(' ',''))" 2>/dev/null || echo "v0.0")
+          BASE=$(python3 << 'PYEOF'
+          import re, pathlib
+          text = pathlib.Path('T38_PlanAid.py').read_text()
+          m = re.search(r"version:\s+ClassVar\[str\]\s*=\s*'([^']+)'", text)
+          print(m.group(1).replace(' ', '') if m else 'v0.0')
+          PYEOF
+          )
+          echo "Detected base version: $BASE"
           # Find highest existing patch for this base version
           git fetch --tags
           LATEST=$(git tag -l "${BASE}.*" | sort -t. -k3 -n | tail -1)
