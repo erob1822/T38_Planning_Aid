@@ -60,7 +60,7 @@ def main():
         subprocess.check_call([sys.executable, "-m", "pip", "install", "pyinstaller"])
 
     # Remove previous build and distribution folders for a clean build
-    for folder in ['build', 'dist', 'T38 PlanAid Distribution']:
+    for folder in ['build', 'dist', 'T38 PlanAid Distribution', '__pycache__']:
         folder_path = script_dir / folder
         if folder_path.exists():
             shutil.rmtree(folder_path)

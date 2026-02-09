@@ -246,7 +246,7 @@ if __name__ == "__main__":
         print(f"{'-' * 60}")
         print("  BLUE   - JASU listed, no recent ops — good to go")
         print("  GREEN  - Recently landed by T-38 (or whitelisted)")
-        print("  Yellow - No JASU listed — call FBO to verify cart")
+        print("  YELLOW - No JASU listed — call FBO to verify cart")
         print("  RED (warning) - Category 2/3 — extra planning req'd")
         print("  RED (ban)     - Category 1 — T-38 ops prohibited")
         print(f"{'=' * 60}")
