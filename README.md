@@ -20,7 +20,7 @@ This is an updated version of the main T38 PlanAid with changes made to increase
 
 1. Download the executable for your operating system:
    - **Windows**: [**T-38 Planning Aid.exe**](https://github.com/erob1822/T38_Planning_Aid/releases/latest/download/T-38.Planning.Aid.exe)
-   - **Mac**: [**T-38 Planning Aid (Mac)**](https://github.com/erob1822/T38_Planning_Aid/releases/latest/download/T-38.Planning.Aid.%28Mac%29)
+   - **Mac**: [**T-38 Planning Aid (Mac)**](https://github.com/erob1822/T38_Planning_Aid/releases/latest/download/T-38.Planning.Aid.Mac)
 2. Place it in a folder of your choice and run it
 
 No install or Python required. On first run the app downloads all data automatically and creates a `T38 Planning Aid/` folder next to itself. Subsequent runs reuse cached data if the folder is kept alongside the executable.
