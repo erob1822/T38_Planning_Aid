@@ -151,7 +151,7 @@ def load_reference_sets():
     return fuel_set, jasu_set
 
 
-def load_wb_list(wb_path: str = 'wb_list.xlsx') -> Dict[str, Any]:
+def load_wb_list(wb_path: str = 'wb_list.xlsx') -> dict[str, any]:
     """
     Load wb_list.xlsx and build lookup dicts for O(1) access.
     
