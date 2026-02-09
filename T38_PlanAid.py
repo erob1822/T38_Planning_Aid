@@ -26,7 +26,7 @@ import KML_Generator
 
 warnings.filterwarnings("ignore")
 
-# --- Logging Setup (Alec style) ---
+# --- Logging Setup  ---
 import colorlog
 import logging
 

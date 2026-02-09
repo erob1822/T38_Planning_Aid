@@ -29,6 +29,7 @@ Pin Color Logic:
     - Green: Recently landed by T-38 (and no issues flagged) - known to work
     - Red diamond: Category 2 or 3 airport - requires extra planning/approval
     - Red circle: Category 1 airport - T-38 operations prohibited
+    - Red pushpin: Blacklisted airport - T-38 operations not authorized
 
 Usage (from master script):
     import KML_Generator
@@ -265,7 +266,7 @@ def build_master_dict(apt: pd.DataFrame, rwy_lookup: dict, fuel_set: set,
 
 def create_kml_styles() -> dict[str, Style]:
     """Create KML pin styles using compact dict approach."""
-    styles = {k: Style() for k in ['ver', 'go', 'nogo', 'cat', 'cat1', 'prev']}
+    styles = {k: Style() for k in ['ver', 'go', 'nogo', 'cat', 'cat1', 'prev', 'blacklist']}
     
     urls = {
         'ver': 'pushpin/wht-pushpin.png',
@@ -273,7 +274,8 @@ def create_kml_styles() -> dict[str, Style]:
         'nogo': 'pushpin/ylw-pushpin.png',
         'cat': 'paddle/red-diamond.png',
         'cat1': 'paddle/red-circle.png',
-        'prev': 'pushpin/grn-pushpin.png'
+        'prev': 'pushpin/grn-pushpin.png',
+        'blacklist': 'pushpin/red-pushpin.png',
     }
     
     for k, s in styles.items():
@@ -314,13 +316,36 @@ def generate_kml(master_dict: dict, wb: dict, date_str: str, version: str, exp_s
     for d in master_dict.values():
         icao = d['ICAO Name']
         
-        # Apply exclusion filters
-        if d['OCONUS'] or d['Black List']:
-            continue
-        # MODIFY: runway threshold - change 7000 to adjust minimum LDA
-        if d['Runway Length'] < 7000 or not d['Contract Gas']:
+        # Always skip OCONUS and non-CONUS identifiers
+        if d['OCONUS']:
             continue
         if not (isinstance(icao, str) and icao.startswith('K') and len(icao) == 4):
+            continue
+        
+        # Blacklisted airports: red pin with blacklist info (no runway/fuel filter)
+        if d['Black List']:
+            desc = (
+                f"{icao} <br/><b>BLACKLISTED - T-38 operations not authorized.</b>"
+                f"<br/><br/>Longest Landing Distance Available (LDA): {d['Runway Length']}"
+                f"{d['Category']}"
+                f"<br/><br/>Runways with Declared LDAs >7000:{d['Runway Output']}"
+                f"{NOTE}"
+                f"<br/><br/>Comments: {d['Comments']}"
+                f"{FOOTER}"
+            )
+            point = kml_out.newpoint(
+                name=f"{icao} {d['Runway Length']} [BLACKLISTED]",
+                description=desc,
+                coords=[(d['Longitude'], d['Latitude'])]
+            )
+            point.style = styles['blacklist']
+            
+            comment_clean = str(d['Comments']).replace('<br/>', ' ').replace('nan', '').strip()
+            txt_lines.append(f"{icao}\tred-blacklist\t{d['Runway Length']}\t{comment_clean}")
+            continue
+        
+        # MODIFY: runway threshold - change 7000 to adjust minimum LDA
+        if d['Runway Length'] < 7000 or not d['Contract Gas']:
             continue
         
         # MODIFY: pin color logic - blue/yellow/green assignment based on JASU availability or recent ops/whitelist
@@ -424,12 +449,36 @@ def generate_map(master_dict: dict, date_str: str, exp_str: str = "") -> Path:
     for d in master_dict.values():
         icao = d['ICAO Name']
 
-        # Same exclusion filters as generate_kml
-        if d['OCONUS'] or d['Black List']:
-            continue
-        if d['Runway Length'] < 7000 or not d['Contract Gas']:
+        # Always skip OCONUS and non-CONUS identifiers
+        if d['OCONUS']:
             continue
         if not (isinstance(icao, str) and icao.startswith('K') and len(icao) == 4):
+            continue
+
+        # Blacklisted airports: red marker with blacklist info (no runway/fuel filter)
+        if d['Black List']:
+            comment = str(d['Comments']).replace('<br/>', ' ').replace('nan', '').strip()
+            popup_html = (
+                f"<b>{icao}</b><br/>"
+                f"<span style='color:red'><b>BLACKLISTED - T-38 operations not authorized.</b></span><br/>"
+                f"LDA: {d['Runway Length']} ft<br/>"
+            )
+            if comment:
+                popup_html += f"Comments: {comment}<br/>"
+            if d['Category']:
+                cat_text = d['Category'].replace('<br/>', '').strip()
+                popup_html += f"<span style='color:red'>{cat_text}</span><br/>"
+
+            folium.Marker(
+                location=[d['Latitude'], d['Longitude']],
+                popup=folium.Popup(popup_html, max_width=300),
+                tooltip=f"{icao}  {d['Runway Length']} ft [BLACKLISTED]",
+                icon=folium.Icon(color='red', icon='remove-sign', prefix='glyphicon'),
+            ).add_to(m)
+            continue
+
+        # Apply standard filters for non-blacklisted airports
+        if d['Runway Length'] < 7000 or not d['Contract Gas']:
             continue
 
         # Pin color logic (mirrors KML)
