@@ -345,3 +345,18 @@ DATA/Cache/nasr/2026-01-22/extracted/State_&_Country_Codes/COUNTRY.txt
 DATA/Cache/nasr/2026-01-22/extracted/State_&_Country_Codes/STATE.txt
 KML_Output/logfile.log
 KML_Output/T38 Apts 06 Feb 2026.kml
+T-38 Planning Aid.spec
+build/T-38 Planning Aid/Analysis-00.toc
+build/T-38 Planning Aid/base_library.zip
+build/T-38 Planning Aid/EXE-00.toc
+build/T-38 Planning Aid/PKG-00.toc
+build/T-38 Planning Aid/PYZ-00.pyz
+build/T-38 Planning Aid/PYZ-00.toc
+build/T-38 Planning Aid/T-38 Planning Aid.pkg
+build/T-38 Planning Aid/warn-T-38 Planning Aid.txt
+build/T-38 Planning Aid/xref-T-38 Planning Aid.html
+build/T-38 Planning Aid/localpycs/pyimod01_archive.pyc
+build/T-38 Planning Aid/localpycs/pyimod02_importers.pyc
+build/T-38 Planning Aid/localpycs/pyimod03_ctypes.pyc
+build/T-38 Planning Aid/localpycs/pyimod04_pywin32.pyc
+build/T-38 Planning Aid/localpycs/struct.pyc
