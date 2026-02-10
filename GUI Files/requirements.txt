@@ -1,0 +1,13 @@
+# T-38 PlanAid Dependencies
+# Install with: pip install -r requirements.txt
+
+
+requests
+requests-ntlm
+pandas
+openpyxl
+simplekml
+pymupdf
+colorlog
+tqdm
+folium

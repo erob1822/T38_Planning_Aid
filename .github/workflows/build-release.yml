@@ -1,12 +1,15 @@
 # Build and auto-release Windows + Mac executables on every push to main.
 #
+# Builds FOUR artifacts in parallel:
+#   1. CLI  (developer) — Windows
+#   2. CLI  (developer) — Mac
+#   3. GUI  (pilot-facing) — Windows
+#   4. GUI  (pilot-facing) — Mac
+#
 # Every push to main auto-creates a new versioned GitHub Release
 # (version read from T38_PlanAid.py AppConfig.version).
 # The README download links point to /releases/latest/download/ so they
 # always resolve to the newest build.
-#
-# Build phase runs Windows + Mac in parallel, then a single Release job
-# collects both ZIPs and creates one release with both assets attached.
 #
 # Can also be triggered manually from Actions → Build Release → Run workflow,
 # or by publishing a release manually.
@@ -24,8 +27,8 @@ permissions:
   contents: write
 
 jobs:
-  # ── Phase 1: Build (parallel) ──────────────────────────────────────
-  build:
+  # ── Phase 1: Build CLI (parallel Windows + Mac) ────────────────────
+  build-cli:
     strategy:
       matrix:
         include:
@@ -99,9 +102,108 @@ jobs:
           name: ${{ matrix.zip_name }}
           path: ${{ matrix.zip_name }}
 
-  # ── Phase 2: Release (runs once, after both builds finish) ─────────
+  # ── Phase 1b: Build GUI (parallel Windows + Mac) ───────────────────
+  build-gui:
+    strategy:
+      matrix:
+        include:
+          - os: windows-latest
+            artifact_name: "T-38 Planning Aid GUI.exe"
+            zip_name: "T38-PlanAid-GUI-Windows.zip"
+            separator: ";"
+          - os: macos-latest
+            artifact_name: "T-38 Planning Aid GUI"
+            zip_name: "T38-PlanAid-GUI-Mac.zip"
+            separator: ":"
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r "GUI Files/requirements.txt"
+          python -m pip install pyinstaller Pillow
+
+      - name: Install sspilib (Windows only)
+        if: runner.os == 'Windows'
+        run: python -m pip install sspilib
+
+      - name: Build GUI executable
+        shell: bash
+        run: |
+          cd "GUI Files"
+          ICON_FLAG=""
+          SSPI_FLAGS=""
+          if [ "$RUNNER_OS" == "Windows" ]; then
+            ICON_FLAG="--icon RPLLogo.ico"
+            SSPI_FLAGS="--hidden-import=sspilib --collect-all sspilib"
+          fi
+          python -m PyInstaller --onefile --windowed \
+            --name "T-38 Planning Aid GUI" \
+            $ICON_FLAG \
+            --hidden-import=fitz \
+            --hidden-import=pandas \
+            --hidden-import=openpyxl \
+            --hidden-import=simplekml \
+            --hidden-import=folium \
+            --hidden-import=requests \
+            --hidden-import=requests_ntlm \
+            --hidden-import=spnego \
+            --hidden-import=PIL \
+            --hidden-import=PIL._tkinter_finder \
+            --collect-all fitz \
+            $SSPI_FLAGS \
+            --add-data "wb_list.xlsx${{ matrix.separator }}." \
+            --add-data "RPLLogo.ico${{ matrix.separator }}." \
+            --add-data "NASAT38s.png${{ matrix.separator }}." \
+            T38_PlanAid_GUI.py
+
+      - name: Prepare distribution folder
+        shell: bash
+        run: |
+          mkdir -p "T38 PlanAid GUI Distribution/T38 Planning Aid"
+          cp "GUI Files/dist/${{ matrix.artifact_name }}" "T38 PlanAid GUI Distribution/"
+          # Copy images alongside exe for fallback
+          cp "GUI Files/RPLLogo.ico" "T38 PlanAid GUI Distribution/"
+          cp "GUI Files/NASAT38s.png" "T38 PlanAid GUI Distribution/"
+          if [ -f "GUI Files/wb_list.xlsx" ]; then
+            cp "GUI Files/wb_list.xlsx" "T38 PlanAid GUI Distribution/T38 Planning Aid/"
+          fi
+          if [ -d "GUI Files/DATA" ]; then
+            cp -r "GUI Files/DATA" "T38 PlanAid GUI Distribution/T38 Planning Aid/"
+          fi
+
+      - name: Create ZIP
+        shell: bash
+        run: |
+          cd "T38 PlanAid GUI Distribution"
+          if command -v zip &> /dev/null; then
+            zip -r "../${{ matrix.zip_name }}" .
+          else
+            python -c "
+          import shutil
+          shutil.make_archive('../${{ matrix.zip_name }}'.replace('.zip',''), 'zip', '.')
+          "
+          fi
+
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.zip_name }}
+          path: ${{ matrix.zip_name }}
+
+  # ── Phase 2: Release (runs once, after all builds finish) ──────────
   release:
-    needs: build
+    needs: [build-cli, build-gui]
     runs-on: ubuntu-latest
 
     steps:
@@ -159,6 +261,8 @@ jobs:
           files: |
             artifacts/T38-PlanAid-Windows.zip
             artifacts/T38-PlanAid-Mac.zip
+            artifacts/T38-PlanAid-GUI-Windows.zip
+            artifacts/T38-PlanAid-GUI-Mac.zip
 
       # Auto-create a new release on push to main
       - name: Auto-create Release
@@ -172,3 +276,5 @@ jobs:
           files: |
             artifacts/T38-PlanAid-Windows.zip
             artifacts/T38-PlanAid-Mac.zip
+            artifacts/T38-PlanAid-GUI-Windows.zip
+            artifacts/T38-PlanAid-GUI-Mac.zip

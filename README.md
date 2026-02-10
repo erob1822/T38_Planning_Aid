@@ -98,6 +98,38 @@ This creates `T38 PlanAid Distribution/` containing the exe and a pre-populated 
 
 After each run, an interactive HTML map auto-opens in your default browser. It displays all eligible airports on an OpenStreetMap base layer with the same color-coded markers as the KML file. Click any marker for a popup with LDA, fuel, JASU status, category restrictions, and comments. The map can be zoomed, panned, and shared as a standalone `.html` file.
 
+## GUI Version
+
+A GUI version of the app lives in the `GUI Files/` folder. It replaces the command-line interface with a tkinter window featuring progress bars, status indicators, and auto-opens the HTML map when done.
+
+### Running from source
+
+```cmd
+cd "GUI Files"
+python -m pip install -r requirements.txt
+python -m pip install Pillow          # optional, for header images
+python T38_PlanAid_GUI.py
+```
+
+### Building the GUI exe
+
+```cmd
+cd "GUI Files"
+python build_GUI_exe.py
+```
+
+This creates `T38 PlanAid GUI Distribution/` containing the windowed exe (no console), bundled images, and a pre-populated `DATA/` folder. The build script automatically installs all dependencies including PyInstaller and Pillow.
+
+### What's different from the CLI version
+
+- Dark-themed GUI with real-time progress bars for each data source
+- RPL logo and T-38 photo in the header
+- Credits popup (accessible via button)
+- Map auto-opens in your browser on completion
+- No console window — runs as a windowed application
+
+> **Note:** The GUI version is a parallel build for testing and is not pushed to releases. The CLI version (`T38_PlanAid.py`) remains the primary distribution.
+
 ## Pin Colors
 
 - **Blue**: JASU listed but no recent ops - otherwise good to go

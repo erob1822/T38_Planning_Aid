@@ -4,27 +4,26 @@ T38 Planning Aid/**
 
 # Build artifacts
 *.exe
+*.spec
+build/
+dist/
+__pycache__/
+T38 PlanAid Distribution/
 
+# Generated / runtime data
 T38_Airports.txt
 T38_masterdict.xlsx
+KML_Output/
+
+# DATA - cached & generated files
+DATA/Cache/**
+DATA/*.csv
+DATA/*.json
+DATA/apt_data/*.csv
+DATA/afd/
+
 Evan Test Code/KML_Testbed_SlimCode.py
 Evan Test Code/JASU_Testbed.py
-DATA/apt_data/APT_RWY.csv
-DATA/apt_data/APT_RWY_END.csv
-DATA/apt_data/APT_BASE.csv
-DATA/afd/CS_SW_20260122.pdf
-DATA/afd/CS_SE_20260122.pdf
-DATA/afd/CS_SC_20260122.pdf
-DATA/afd/CS_PAC_20260122.pdf
-DATA/afd/CS_NW_20260122.pdf
-DATA/afd/CS_NE_20260122.pdf
-DATA/afd/CS_NC_20260122.pdf
-DATA/afd/CS_EC_20260122.pdf
-DATA/afd/CS_AK_20260122.pdf
-DATA/jasu_data.csv
-DATA/fuel_data.csv
-DATA/flights_data.csv
-DATA/comments_data.csv
 Alecs Code/utils.py
 Alecs Code/temp.py
 Alecs Code/T38_PlanAid.py
@@ -33,333 +32,20 @@ Alecs Code/KML_Generator.py
 Alecs Code/JASU_Finder.py
 Alecs Code/Data_Downloader.py
 Alecs Code/API_Scraper.py
-__pycache__/Data_Acquisition.cpython-314.pyc
-__pycache__/KML_Generator.cpython-314.pyc
-T38_PlanAid.spec
-build/T38_PlanAid/Analysis-00.toc
-build/T38_PlanAid/base_library.zip
-build/T38_PlanAid/EXE-00.toc
-build/T38_PlanAid/PKG-00.toc
-build/T38_PlanAid/PYZ-00.pyz
-build/T38_PlanAid/PYZ-00.toc
-build/T38_PlanAid/T38_PlanAid.pkg
-build/T38_PlanAid/warn-T38_PlanAid.txt
-build/T38_PlanAid/xref-T38_PlanAid.html
-build/T38_PlanAid/localpycs/pyimod01_archive.pyc
-build/T38_PlanAid/localpycs/pyimod02_importers.pyc
-build/T38_PlanAid/localpycs/pyimod03_ctypes.pyc
-build/T38_PlanAid/localpycs/pyimod04_pywin32.pyc
-build/T38_PlanAid/localpycs/struct.pyc
-T38 PlanAid Distribution/
-Alec/T38_PlanAid_COPY-main/.gitignore
-Alec/T38_PlanAid_COPY-main/API_Scraper.py
-Alec/T38_PlanAid_COPY-main/Data_Downloader.py
-Alec/T38_PlanAid_COPY-main/Developer_ReadMe.txt
-Alec/T38_PlanAid_COPY-main/JASU_Finder.py
-Alec/T38_PlanAid_COPY-main/KML_Generator.py
-Alec/T38_PlanAid_COPY-main/LDA_Tester.py
-Alec/T38_PlanAid_COPY-main/pyproject.toml
-Alec/T38_PlanAid_COPY-main/README.md
-Alec/T38_PlanAid_COPY-main/requirements.txt
-Alec/T38_PlanAid_COPY-main/T38 Apts 02 Oct 2025.kml
-Alec/T38_PlanAid_COPY-main/T38 Apts 27 Nov 2025.kml
-Alec/T38_PlanAid_COPY-main/T38_PlanAid_V2.1.exe
-Alec/T38_PlanAid_COPY-main/T38_PlanAid.py
-Alec/T38_PlanAid_COPY-main/temp.py
-Alec/T38_PlanAid_COPY-main/utils.py
-Alec/T38_PlanAid_COPY-main/wb_list.xlsx
-Alec/T38_PlanAid_COPY-main/Archive/.gitignore
-Alec/T38_PlanAid_COPY-main/Archive/README.md
-Alec/T38_PlanAid_COPY-main/Archive/T-38 PlanAid 1.09d/T-38 PlanAid 1.09d/data_combiner.py
-Alec/T38_PlanAid_COPY-main/Archive/T-38 PlanAid 1.09d/T-38 PlanAid 1.09d/Data_puller.py
-Alec/T38_PlanAid_COPY-main/Archive/T-38 PlanAid 1.09d/T-38 PlanAid 1.09d/README.txt
-Alec/T38_PlanAid_COPY-main/Archive/T-38 PlanAid 1.09d/T-38 PlanAid 1.09d/T_38_Runner.py
-Alec/T38_PlanAid_COPY-main/Archive/T-38 PlanAid 1.09d/T-38 PlanAid 1.09d/.idea/misc.xml
-Alec/T38_PlanAid_COPY-main/Archive/T-38 PlanAid 1.09d/T-38 PlanAid 1.09d/.idea/modules.xml
-Alec/T38_PlanAid_COPY-main/Archive/T-38 PlanAid 1.09d/T-38 PlanAid 1.09d/.idea/T-38 PlanAid.iml
-Alec/T38_PlanAid_COPY-main/Archive/T-38 PlanAid 1.09d/T-38 PlanAid 1.09d/.idea/workspace.xml
-Alec/T38_PlanAid_COPY-main/Archive/T-38 PlanAid 1.09d/T-38 PlanAid 1.09d/.idea/inspectionProfiles/profiles_settings.xml
-Alec/T38_PlanAid_COPY-main/Archive/T-38_PlanAid_MASTER/T-38_PlanAid_MASTER/data_combiner.py
-Alec/T38_PlanAid_COPY-main/Archive/T-38_PlanAid_MASTER/T-38_PlanAid_MASTER/Data_Extractor.py
-Alec/T38_PlanAid_COPY-main/Archive/T-38_PlanAid_MASTER/T-38_PlanAid_MASTER/Data_puller.py
-Alec/T38_PlanAid_COPY-main/Archive/T-38_PlanAid_MASTER/T-38_PlanAid_MASTER/T_38_Application.py
-Alec/T38_PlanAid_COPY-main/Archive/T-38_PlanAid_MASTER/T-38_PlanAid_MASTER/T_38_Runner.py
-Alec/T38_PlanAid_COPY-main/Archive/T-38_PlanAid_MASTER/T-38_PlanAid_MASTER/.idea/.gitignore
-Alec/T38_PlanAid_COPY-main/Archive/T-38_PlanAid_MASTER/T-38_PlanAid_MASTER/.idea/misc.xml
-Alec/T38_PlanAid_COPY-main/Archive/T-38_PlanAid_MASTER/T-38_PlanAid_MASTER/.idea/modules.xml
-Alec/T38_PlanAid_COPY-main/Archive/T-38_PlanAid_MASTER/T-38_PlanAid_MASTER/.idea/T-38 PlanAid.iml
-Alec/T38_PlanAid_COPY-main/Archive/T-38_PlanAid_MASTER/T-38_PlanAid_MASTER/.idea/inspectionProfiles/profiles_settings.xml
-Alec/T38_PlanAid_COPY-main/Archive/T38_Data_Extractor_v1.02/T38_Data_Extractor_v1.02/.idea/misc.xml
-Alec/T38_PlanAid_COPY-main/Archive/T38_Data_Extractor_v1.02/T38_Data_Extractor_v1.02/.idea/modules.xml
-Alec/T38_PlanAid_COPY-main/Archive/T38_Data_Extractor_v1.02/T38_Data_Extractor_v1.02/.idea/T38DataExtractor.iml
-Alec/T38_PlanAid_COPY-main/Archive/T38_Data_Extractor_v1.02/T38_Data_Extractor_v1.02/.idea/workspace.xml
-Alec/T38_PlanAid_COPY-main/Archive/T38_Data_Extractor_v1.02/T38_Data_Extractor_v1.02/.idea/inspectionProfiles/profiles_settings.xml
-Alec/T38_PlanAid_COPY-main/Archive/T38_PlanAid 13SEP2024_ADRICHEZ/.gitkeep
-Alec/T38_PlanAid_COPY-main/Archive/T38_PlanAid 13SEP2024_ADRICHEZ/API_Scraper.py
-Alec/T38_PlanAid_COPY-main/Archive/T38_PlanAid 13SEP2024_ADRICHEZ/Data_Extractor.py
-Alec/T38_PlanAid_COPY-main/Archive/T38_PlanAid 13SEP2024_ADRICHEZ/JASU_Finder.py
-Alec/T38_PlanAid_COPY-main/Archive/T38_PlanAid 13SEP2024_ADRICHEZ/KML_Generator.py
-Alec/T38_PlanAid_COPY-main/Archive/T38_PlanAid 13SEP2024_ADRICHEZ/README.md
-Alec/T38_PlanAid_COPY-main/Archive/T38_PlanAid 13SEP2024_ADRICHEZ/T38_PlanAid.py
-Alec/T38_PlanAid_COPY-main/Archive/T38_PlanAid 13SEP2024_ADRICHEZ/wb_list.xlsx
-DATA/data_download_cache.json
-DATA/Cache/comments/20260206_105756/comments_data.csv
-DATA/Cache/comments/20260206_105853/comments_data.csv
-DATA/Cache/comments/20260206_110024/comments_data.csv
-DATA/Cache/comments/20260206_110837/comments_data.csv
-DATA/Cache/dcs/2026-01-22/data.zip
-DATA/Cache/dcs/2026-01-22/extracted/airportgraphicchangelist01222026.txt
-DATA/Cache/dcs/2026-01-22/extracted/CS_AK_20260122.pdf
-DATA/Cache/dcs/2026-01-22/extracted/CS_EC_20260122.pdf
-DATA/Cache/dcs/2026-01-22/extracted/CS_NC_20260122.pdf
-DATA/Cache/dcs/2026-01-22/extracted/CS_NE_20260122.pdf
-DATA/Cache/dcs/2026-01-22/extracted/CS_NW_20260122.pdf
-DATA/Cache/dcs/2026-01-22/extracted/CS_PAC_20260122.pdf
-DATA/Cache/dcs/2026-01-22/extracted/CS_SC_20260122.pdf
-DATA/Cache/dcs/2026-01-22/extracted/CS_SE_20260122.pdf
-DATA/Cache/dcs/2026-01-22/extracted/CS_SW_20260122.pdf
-DATA/Cache/flights/20260206_105752/flights_data.csv
-DATA/Cache/flights/20260206_105851/flights_data.csv
-DATA/Cache/flights/20260206_110021/flights_data.csv
-DATA/Cache/flights/20260206_110833/flights_data.csv
-DATA/Cache/fuel/20260206_105754/fuel_data.csv
-DATA/Cache/fuel/20260206_105852/fuel_data.csv
-DATA/Cache/fuel/20260206_110023/fuel_data.csv
-DATA/Cache/fuel/20260206_110834/fuel_data.csv
-DATA/Cache/nasr/2026-01-22/data.zip
-DATA/Cache/nasr/2026-01-22/extracted/AFF.txt
-DATA/Cache/nasr/2026-01-22/extracted/APT.txt
-DATA/Cache/nasr/2026-01-22/extracted/ARB.txt
-DATA/Cache/nasr/2026-01-22/extracted/ATS.txt
-DATA/Cache/nasr/2026-01-22/extracted/AWOS.txt
-DATA/Cache/nasr/2026-01-22/extracted/AWY.txt
-DATA/Cache/nasr/2026-01-22/extracted/CDR.txt
-DATA/Cache/nasr/2026-01-22/extracted/COM.txt
-DATA/Cache/nasr/2026-01-22/extracted/FIX.txt
-DATA/Cache/nasr/2026-01-22/extracted/FSS.txt
-DATA/Cache/nasr/2026-01-22/extracted/HPF.txt
-DATA/Cache/nasr/2026-01-22/extracted/ILS.txt
-DATA/Cache/nasr/2026-01-22/extracted/LID.txt
-DATA/Cache/nasr/2026-01-22/extracted/MAA.txt
-DATA/Cache/nasr/2026-01-22/extracted/MTR.txt
-DATA/Cache/nasr/2026-01-22/extracted/NAV.txt
-DATA/Cache/nasr/2026-01-22/extracted/PFR.txt
-DATA/Cache/nasr/2026-01-22/extracted/PJA.txt
-DATA/Cache/nasr/2026-01-22/extracted/README.txt
-DATA/Cache/nasr/2026-01-22/extracted/STARDP.txt
-DATA/Cache/nasr/2026-01-22/extracted/TWR.txt
-DATA/Cache/nasr/2026-01-22/extracted/WXL.txt
-DATA/Cache/nasr/2026-01-22/extracted/Additional_Data/Shape_Files/Class_Airspace.dbf
-DATA/Cache/nasr/2026-01-22/extracted/Additional_Data/Shape_Files/Class_Airspace.prj
-DATA/Cache/nasr/2026-01-22/extracted/Additional_Data/Shape_Files/Class_Airspace.shp
-DATA/Cache/nasr/2026-01-22/extracted/Additional_Data/Shape_Files/Class_Airspace.shx
-DATA/Cache/nasr/2026-01-22/extracted/CSV_Data/22_Jan_2026_CSV.zip
-DATA/Cache/nasr/2026-01-22/extracted/CSV_Data/22_Jan_2026_CSV/25_Dec_2025_CSV-22_Jan_2026_CSV.zip
-DATA/Cache/nasr/2026-01-22/extracted/CSV_Data/22_Jan_2026_CSV/APT DATA LAYOUT.pdf
-DATA/Cache/nasr/2026-01-22/extracted/CSV_Data/22_Jan_2026_CSV/APT_ARS.csv
-DATA/Cache/nasr/2026-01-22/extracted/CSV_Data/22_Jan_2026_CSV/APT_ATT.csv
-DATA/Cache/nasr/2026-01-22/extracted/CSV_Data/22_Jan_2026_CSV/APT_BASE.csv
-DATA/Cache/nasr/2026-01-22/extracted/CSV_Data/22_Jan_2026_CSV/APT_CON.csv
-DATA/Cache/nasr/2026-01-22/extracted/CSV_Data/22_Jan_2026_CSV/APT_CSV_DATA_STRUCTURE.csv
-DATA/Cache/nasr/2026-01-22/extracted/CSV_Data/22_Jan_2026_CSV/APT_RMK.csv
-DATA/Cache/nasr/2026-01-22/extracted/CSV_Data/22_Jan_2026_CSV/APT_RWY_END.csv
-DATA/Cache/nasr/2026-01-22/extracted/CSV_Data/22_Jan_2026_CSV/APT_RWY.csv
-DATA/Cache/nasr/2026-01-22/extracted/CSV_Data/22_Jan_2026_CSV/ARB DATA LAYOUT.pdf
-DATA/Cache/nasr/2026-01-22/extracted/CSV_Data/22_Jan_2026_CSV/ARB_BASE.csv
-DATA/Cache/nasr/2026-01-22/extracted/CSV_Data/22_Jan_2026_CSV/ARB_CSV_DATA_STRUCTURE.csv
-DATA/Cache/nasr/2026-01-22/extracted/CSV_Data/22_Jan_2026_CSV/ARB_SEG.csv
-DATA/Cache/nasr/2026-01-22/extracted/CSV_Data/22_Jan_2026_CSV/ATC DATA LAYOUT.pdf
-DATA/Cache/nasr/2026-01-22/extracted/CSV_Data/22_Jan_2026_CSV/ATC_ATIS.csv
-DATA/Cache/nasr/2026-01-22/extracted/CSV_Data/22_Jan_2026_CSV/ATC_BASE.csv
-DATA/Cache/nasr/2026-01-22/extracted/CSV_Data/22_Jan_2026_CSV/ATC_CSV_DATA_STRUCTURE.csv
-DATA/Cache/nasr/2026-01-22/extracted/CSV_Data/22_Jan_2026_CSV/ATC_RMK.csv
-DATA/Cache/nasr/2026-01-22/extracted/CSV_Data/22_Jan_2026_CSV/ATC_SVC.csv
-DATA/Cache/nasr/2026-01-22/extracted/CSV_Data/22_Jan_2026_CSV/AWOS DATA LAYOUT.pdf
-DATA/Cache/nasr/2026-01-22/extracted/CSV_Data/22_Jan_2026_CSV/AWOS_CSV_DATA_STRUCTURE.csv
-DATA/Cache/nasr/2026-01-22/extracted/CSV_Data/22_Jan_2026_CSV/AWOS.csv
-DATA/Cache/nasr/2026-01-22/extracted/CSV_Data/22_Jan_2026_CSV/AWY DATA LAYOUT.pdf
-DATA/Cache/nasr/2026-01-22/extracted/CSV_Data/22_Jan_2026_CSV/AWY_BASE.csv
-DATA/Cache/nasr/2026-01-22/extracted/CSV_Data/22_Jan_2026_CSV/AWY_CSV_DATA_STRUCTURE.csv
-DATA/Cache/nasr/2026-01-22/extracted/CSV_Data/22_Jan_2026_CSV/AWY_SEG_ALT.csv
-DATA/Cache/nasr/2026-01-22/extracted/CSV_Data/22_Jan_2026_CSV/CDR DATA LAYOUT.pdf
-DATA/Cache/nasr/2026-01-22/extracted/CSV_Data/22_Jan_2026_CSV/CDR_CSV_DATA_STRUCTURE.csv
-DATA/Cache/nasr/2026-01-22/extracted/CSV_Data/22_Jan_2026_CSV/CDR.csv
-DATA/Cache/nasr/2026-01-22/extracted/CSV_Data/22_Jan_2026_CSV/CLS_ARSP DATA LAYOUT.pdf
-DATA/Cache/nasr/2026-01-22/extracted/CSV_Data/22_Jan_2026_CSV/CLS_ARSP_CSV_DATA_STRUCTURE.csv
-DATA/Cache/nasr/2026-01-22/extracted/CSV_Data/22_Jan_2026_CSV/CLS_ARSP.csv
-DATA/Cache/nasr/2026-01-22/extracted/CSV_Data/22_Jan_2026_CSV/COM DATA LAYOUT.pdf
-DATA/Cache/nasr/2026-01-22/extracted/CSV_Data/22_Jan_2026_CSV/COM_CSV_DATA_STRUCTURE.csv
-DATA/Cache/nasr/2026-01-22/extracted/CSV_Data/22_Jan_2026_CSV/COM.csv
-DATA/Cache/nasr/2026-01-22/extracted/CSV_Data/22_Jan_2026_CSV/CSV_CHG_RPT_README.pdf
-DATA/Cache/nasr/2026-01-22/extracted/CSV_Data/22_Jan_2026_CSV/CSV_README.pdf
-DATA/Cache/nasr/2026-01-22/extracted/CSV_Data/22_Jan_2026_CSV/DP DATA LAYOUT.pdf
-DATA/Cache/nasr/2026-01-22/extracted/CSV_Data/22_Jan_2026_CSV/DP_APT.csv
-DATA/Cache/nasr/2026-01-22/extracted/CSV_Data/22_Jan_2026_CSV/DP_BASE.csv
-DATA/Cache/nasr/2026-01-22/extracted/CSV_Data/22_Jan_2026_CSV/DP_CSV_DATA_STRUCTURE.csv
-DATA/Cache/nasr/2026-01-22/extracted/CSV_Data/22_Jan_2026_CSV/DP_RTE.csv
-DATA/Cache/nasr/2026-01-22/extracted/CSV_Data/22_Jan_2026_CSV/FIX DATA LAYOUT.pdf
-DATA/Cache/nasr/2026-01-22/extracted/CSV_Data/22_Jan_2026_CSV/FIX_BASE.csv
-DATA/Cache/nasr/2026-01-22/extracted/CSV_Data/22_Jan_2026_CSV/FIX_CHRT.csv
-DATA/Cache/nasr/2026-01-22/extracted/CSV_Data/22_Jan_2026_CSV/FIX_CSV_DATA_STRUCTURE.csv
-DATA/Cache/nasr/2026-01-22/extracted/CSV_Data/22_Jan_2026_CSV/FIX_NAV.csv
-DATA/Cache/nasr/2026-01-22/extracted/CSV_Data/22_Jan_2026_CSV/FRQ DATA LAYOUT.pdf
-DATA/Cache/nasr/2026-01-22/extracted/CSV_Data/22_Jan_2026_CSV/FRQ_CSV_DATA_STRUCTURE.csv
-DATA/Cache/nasr/2026-01-22/extracted/CSV_Data/22_Jan_2026_CSV/FRQ.csv
-DATA/Cache/nasr/2026-01-22/extracted/CSV_Data/22_Jan_2026_CSV/FSS DATA LAYOUT.pdf
-DATA/Cache/nasr/2026-01-22/extracted/CSV_Data/22_Jan_2026_CSV/FSS_BASE.csv
-DATA/Cache/nasr/2026-01-22/extracted/CSV_Data/22_Jan_2026_CSV/FSS_CSV_DATA_STRUCTURE.csv
-DATA/Cache/nasr/2026-01-22/extracted/CSV_Data/22_Jan_2026_CSV/FSS_RMK.csv
-DATA/Cache/nasr/2026-01-22/extracted/CSV_Data/22_Jan_2026_CSV/HPF DATA LAYOUT.pdf
-DATA/Cache/nasr/2026-01-22/extracted/CSV_Data/22_Jan_2026_CSV/HPF_BASE.csv
-DATA/Cache/nasr/2026-01-22/extracted/CSV_Data/22_Jan_2026_CSV/HPF_CHRT.csv
-DATA/Cache/nasr/2026-01-22/extracted/CSV_Data/22_Jan_2026_CSV/HPF_CSV_DATA_STRUCTURE.csv
-DATA/Cache/nasr/2026-01-22/extracted/CSV_Data/22_Jan_2026_CSV/HPF_RMK.csv
-DATA/Cache/nasr/2026-01-22/extracted/CSV_Data/22_Jan_2026_CSV/HPF_SPD_ALT.csv
-DATA/Cache/nasr/2026-01-22/extracted/CSV_Data/22_Jan_2026_CSV/ILS DATA LAYOUT.pdf
-DATA/Cache/nasr/2026-01-22/extracted/CSV_Data/22_Jan_2026_CSV/ILS_BASE.csv
-DATA/Cache/nasr/2026-01-22/extracted/CSV_Data/22_Jan_2026_CSV/ILS_CSV_DATA_STRUCTURE.csv
-DATA/Cache/nasr/2026-01-22/extracted/CSV_Data/22_Jan_2026_CSV/ILS_DME.csv
-DATA/Cache/nasr/2026-01-22/extracted/CSV_Data/22_Jan_2026_CSV/ILS_GS.csv
-DATA/Cache/nasr/2026-01-22/extracted/CSV_Data/22_Jan_2026_CSV/ILS_MKR.csv
-DATA/Cache/nasr/2026-01-22/extracted/CSV_Data/22_Jan_2026_CSV/ILS_RMK.csv
-DATA/Cache/nasr/2026-01-22/extracted/CSV_Data/22_Jan_2026_CSV/LID DATA LAYOUT.pdf
-DATA/Cache/nasr/2026-01-22/extracted/CSV_Data/22_Jan_2026_CSV/LID_CSV_DATA_STRUCTURE.csv
-DATA/Cache/nasr/2026-01-22/extracted/CSV_Data/22_Jan_2026_CSV/LID.csv
-DATA/Cache/nasr/2026-01-22/extracted/CSV_Data/22_Jan_2026_CSV/MAA DATA LAYOUT.pdf
-DATA/Cache/nasr/2026-01-22/extracted/CSV_Data/22_Jan_2026_CSV/MAA_BASE.csv
-DATA/Cache/nasr/2026-01-22/extracted/CSV_Data/22_Jan_2026_CSV/MAA_CON.csv
-DATA/Cache/nasr/2026-01-22/extracted/CSV_Data/22_Jan_2026_CSV/MAA_CSV_DATA_STRUCTURE.csv
-DATA/Cache/nasr/2026-01-22/extracted/CSV_Data/22_Jan_2026_CSV/MAA_RMK.csv
-DATA/Cache/nasr/2026-01-22/extracted/CSV_Data/22_Jan_2026_CSV/MAA_SHP.csv
-DATA/Cache/nasr/2026-01-22/extracted/CSV_Data/22_Jan_2026_CSV/MIL_OPS DATA LAYOUT.pdf
-DATA/Cache/nasr/2026-01-22/extracted/CSV_Data/22_Jan_2026_CSV/MIL_OPS_CSV_DATA_STRUCTURE.csv
-DATA/Cache/nasr/2026-01-22/extracted/CSV_Data/22_Jan_2026_CSV/MIL_OPS.csv
-DATA/Cache/nasr/2026-01-22/extracted/CSV_Data/22_Jan_2026_CSV/MTR DATA LAYOUT.pdf
-DATA/Cache/nasr/2026-01-22/extracted/CSV_Data/22_Jan_2026_CSV/MTR_AGY.csv
-DATA/Cache/nasr/2026-01-22/extracted/CSV_Data/22_Jan_2026_CSV/MTR_BASE.csv
-DATA/Cache/nasr/2026-01-22/extracted/CSV_Data/22_Jan_2026_CSV/MTR_CSV_DATA_STRUCTURE.csv
-DATA/Cache/nasr/2026-01-22/extracted/CSV_Data/22_Jan_2026_CSV/MTR_PT.csv
-DATA/Cache/nasr/2026-01-22/extracted/CSV_Data/22_Jan_2026_CSV/MTR_SOP.csv
-DATA/Cache/nasr/2026-01-22/extracted/CSV_Data/22_Jan_2026_CSV/MTR_TERR.csv
-DATA/Cache/nasr/2026-01-22/extracted/CSV_Data/22_Jan_2026_CSV/MTR_WDTH.csv
-DATA/Cache/nasr/2026-01-22/extracted/CSV_Data/22_Jan_2026_CSV/NAV DATA LAYOUT.pdf
-DATA/Cache/nasr/2026-01-22/extracted/CSV_Data/22_Jan_2026_CSV/NAV_BASE.csv
-DATA/Cache/nasr/2026-01-22/extracted/CSV_Data/22_Jan_2026_CSV/NAV_CKPT.csv
-DATA/Cache/nasr/2026-01-22/extracted/CSV_Data/22_Jan_2026_CSV/NAV_CSV_DATA_STRUCTURE.csv
-DATA/Cache/nasr/2026-01-22/extracted/CSV_Data/22_Jan_2026_CSV/NAV_RMK.csv
-DATA/Cache/nasr/2026-01-22/extracted/CSV_Data/22_Jan_2026_CSV/PFR DATA LAYOUT.pdf
-DATA/Cache/nasr/2026-01-22/extracted/CSV_Data/22_Jan_2026_CSV/PFR_BASE.csv
-DATA/Cache/nasr/2026-01-22/extracted/CSV_Data/22_Jan_2026_CSV/PFR_CSV_DATA_STRUCTURE.csv
-DATA/Cache/nasr/2026-01-22/extracted/CSV_Data/22_Jan_2026_CSV/PFR_RMT_FMT.csv
-DATA/Cache/nasr/2026-01-22/extracted/CSV_Data/22_Jan_2026_CSV/PFR_SEG.csv
-DATA/Cache/nasr/2026-01-22/extracted/CSV_Data/22_Jan_2026_CSV/PJA DATA LAYOUT.pdf
-DATA/Cache/nasr/2026-01-22/extracted/CSV_Data/22_Jan_2026_CSV/PJA_BASE.csv
-DATA/Cache/nasr/2026-01-22/extracted/CSV_Data/22_Jan_2026_CSV/PJA_CON.csv
-DATA/Cache/nasr/2026-01-22/extracted/CSV_Data/22_Jan_2026_CSV/PJA_CSV_DATA_STRUCTURE.csv
-DATA/Cache/nasr/2026-01-22/extracted/CSV_Data/22_Jan_2026_CSV/RDR DATA LAYOUT.pdf
-DATA/Cache/nasr/2026-01-22/extracted/CSV_Data/22_Jan_2026_CSV/RDR_CSV_DATA_STRUCTURE.csv
-DATA/Cache/nasr/2026-01-22/extracted/CSV_Data/22_Jan_2026_CSV/RDR.csv
-DATA/Cache/nasr/2026-01-22/extracted/CSV_Data/22_Jan_2026_CSV/STAR DATA LAYOUT.pdf
-DATA/Cache/nasr/2026-01-22/extracted/CSV_Data/22_Jan_2026_CSV/STAR_APT.csv
-DATA/Cache/nasr/2026-01-22/extracted/CSV_Data/22_Jan_2026_CSV/STAR_BASE.csv
-DATA/Cache/nasr/2026-01-22/extracted/CSV_Data/22_Jan_2026_CSV/STAR_CSV_DATA_STRUCTURE.csv
-DATA/Cache/nasr/2026-01-22/extracted/CSV_Data/22_Jan_2026_CSV/STAR_RTE.csv
-DATA/Cache/nasr/2026-01-22/extracted/CSV_Data/22_Jan_2026_CSV/WXL DATA LAYOUT.pdf
-DATA/Cache/nasr/2026-01-22/extracted/CSV_Data/22_Jan_2026_CSV/WXL_BASE.csv
-DATA/Cache/nasr/2026-01-22/extracted/CSV_Data/22_Jan_2026_CSV/WXL_CSV_DATA_STRUCTURE.csv
-DATA/Cache/nasr/2026-01-22/extracted/CSV_Data/22_Jan_2026_CSV/WXL_SVC.csv
-DATA/Cache/nasr/2026-01-22/extracted/CSV_Data/22_Jan_2026_CSV/25_Dec_2025_CSV-22_Jan_2026_CSV/APT_ARS_CHG_RPT.csv
-DATA/Cache/nasr/2026-01-22/extracted/CSV_Data/22_Jan_2026_CSV/25_Dec_2025_CSV-22_Jan_2026_CSV/APT_ATT_CHG_RPT.csv
-DATA/Cache/nasr/2026-01-22/extracted/CSV_Data/22_Jan_2026_CSV/25_Dec_2025_CSV-22_Jan_2026_CSV/APT_BASE_CHG_RPT.csv
-DATA/Cache/nasr/2026-01-22/extracted/CSV_Data/22_Jan_2026_CSV/25_Dec_2025_CSV-22_Jan_2026_CSV/APT_CON_CHG_RPT.csv
-DATA/Cache/nasr/2026-01-22/extracted/CSV_Data/22_Jan_2026_CSV/25_Dec_2025_CSV-22_Jan_2026_CSV/APT_RMK_CHG_RPT.csv
-DATA/Cache/nasr/2026-01-22/extracted/CSV_Data/22_Jan_2026_CSV/25_Dec_2025_CSV-22_Jan_2026_CSV/APT_RWY_CHG_RPT.csv
-DATA/Cache/nasr/2026-01-22/extracted/CSV_Data/22_Jan_2026_CSV/25_Dec_2025_CSV-22_Jan_2026_CSV/APT_RWY_END_CHG_RPT.csv
-DATA/Cache/nasr/2026-01-22/extracted/CSV_Data/22_Jan_2026_CSV/25_Dec_2025_CSV-22_Jan_2026_CSV/ATC_ATIS_CHG_RPT.csv
-DATA/Cache/nasr/2026-01-22/extracted/CSV_Data/22_Jan_2026_CSV/25_Dec_2025_CSV-22_Jan_2026_CSV/ATC_BASE_CHG_RPT.csv
-DATA/Cache/nasr/2026-01-22/extracted/CSV_Data/22_Jan_2026_CSV/25_Dec_2025_CSV-22_Jan_2026_CSV/ATC_RMK_CHG_RPT.csv
-DATA/Cache/nasr/2026-01-22/extracted/CSV_Data/22_Jan_2026_CSV/25_Dec_2025_CSV-22_Jan_2026_CSV/ATC_SVC_CHG_RPT.csv
-DATA/Cache/nasr/2026-01-22/extracted/CSV_Data/22_Jan_2026_CSV/25_Dec_2025_CSV-22_Jan_2026_CSV/AWOS_CHG_RPT.csv
-DATA/Cache/nasr/2026-01-22/extracted/CSV_Data/22_Jan_2026_CSV/25_Dec_2025_CSV-22_Jan_2026_CSV/AWY_BASE_CHG_RPT.csv
-DATA/Cache/nasr/2026-01-22/extracted/CSV_Data/22_Jan_2026_CSV/25_Dec_2025_CSV-22_Jan_2026_CSV/AWY_SEG_ALT_CHG_RPT.csv
-DATA/Cache/nasr/2026-01-22/extracted/CSV_Data/22_Jan_2026_CSV/25_Dec_2025_CSV-22_Jan_2026_CSV/COM_CHG_RPT.csv
-DATA/Cache/nasr/2026-01-22/extracted/CSV_Data/22_Jan_2026_CSV/25_Dec_2025_CSV-22_Jan_2026_CSV/CSV_CHG_RPT_README.pdf
-DATA/Cache/nasr/2026-01-22/extracted/CSV_Data/22_Jan_2026_CSV/25_Dec_2025_CSV-22_Jan_2026_CSV/DP_APT_CHG_RPT.csv
-DATA/Cache/nasr/2026-01-22/extracted/CSV_Data/22_Jan_2026_CSV/25_Dec_2025_CSV-22_Jan_2026_CSV/DP_BASE_CHG_RPT.csv
-DATA/Cache/nasr/2026-01-22/extracted/CSV_Data/22_Jan_2026_CSV/25_Dec_2025_CSV-22_Jan_2026_CSV/DP_RTE_CHG_RPT.csv
-DATA/Cache/nasr/2026-01-22/extracted/CSV_Data/22_Jan_2026_CSV/25_Dec_2025_CSV-22_Jan_2026_CSV/FIX_BASE_CHG_RPT.csv
-DATA/Cache/nasr/2026-01-22/extracted/CSV_Data/22_Jan_2026_CSV/25_Dec_2025_CSV-22_Jan_2026_CSV/FIX_CHRT_CHG_RPT.csv
-DATA/Cache/nasr/2026-01-22/extracted/CSV_Data/22_Jan_2026_CSV/25_Dec_2025_CSV-22_Jan_2026_CSV/FIX_NAV_CHG_RPT.csv
-DATA/Cache/nasr/2026-01-22/extracted/CSV_Data/22_Jan_2026_CSV/25_Dec_2025_CSV-22_Jan_2026_CSV/FRQ_CHG_RPT.csv
-DATA/Cache/nasr/2026-01-22/extracted/CSV_Data/22_Jan_2026_CSV/25_Dec_2025_CSV-22_Jan_2026_CSV/HPF_BASE_CHG_RPT.csv
-DATA/Cache/nasr/2026-01-22/extracted/CSV_Data/22_Jan_2026_CSV/25_Dec_2025_CSV-22_Jan_2026_CSV/HPF_CHRT_CHG_RPT.csv
-DATA/Cache/nasr/2026-01-22/extracted/CSV_Data/22_Jan_2026_CSV/25_Dec_2025_CSV-22_Jan_2026_CSV/HPF_RMK_CHG_RPT.csv
-DATA/Cache/nasr/2026-01-22/extracted/CSV_Data/22_Jan_2026_CSV/25_Dec_2025_CSV-22_Jan_2026_CSV/HPF_SPD_ALT_CHG_RPT.csv
-DATA/Cache/nasr/2026-01-22/extracted/CSV_Data/22_Jan_2026_CSV/25_Dec_2025_CSV-22_Jan_2026_CSV/ILS_BASE_CHG_RPT.csv
-DATA/Cache/nasr/2026-01-22/extracted/CSV_Data/22_Jan_2026_CSV/25_Dec_2025_CSV-22_Jan_2026_CSV/ILS_DME_CHG_RPT.csv
-DATA/Cache/nasr/2026-01-22/extracted/CSV_Data/22_Jan_2026_CSV/25_Dec_2025_CSV-22_Jan_2026_CSV/ILS_GS_CHG_RPT.csv
-DATA/Cache/nasr/2026-01-22/extracted/CSV_Data/22_Jan_2026_CSV/25_Dec_2025_CSV-22_Jan_2026_CSV/ILS_MKR_CHG_RPT.csv
-DATA/Cache/nasr/2026-01-22/extracted/CSV_Data/22_Jan_2026_CSV/25_Dec_2025_CSV-22_Jan_2026_CSV/ILS_RMK_CHG_RPT.csv
-DATA/Cache/nasr/2026-01-22/extracted/CSV_Data/22_Jan_2026_CSV/25_Dec_2025_CSV-22_Jan_2026_CSV/LID_CHG_RPT.csv
-DATA/Cache/nasr/2026-01-22/extracted/CSV_Data/22_Jan_2026_CSV/25_Dec_2025_CSV-22_Jan_2026_CSV/MAA_SHP_CHG_RPT.csv
-DATA/Cache/nasr/2026-01-22/extracted/CSV_Data/22_Jan_2026_CSV/25_Dec_2025_CSV-22_Jan_2026_CSV/MIL_OPS_CHG_RPT.csv
-DATA/Cache/nasr/2026-01-22/extracted/CSV_Data/22_Jan_2026_CSV/25_Dec_2025_CSV-22_Jan_2026_CSV/MTR_AGY_CHG_RPT.csv
-DATA/Cache/nasr/2026-01-22/extracted/CSV_Data/22_Jan_2026_CSV/25_Dec_2025_CSV-22_Jan_2026_CSV/MTR_PT_CHG_RPT.csv
-DATA/Cache/nasr/2026-01-22/extracted/CSV_Data/22_Jan_2026_CSV/25_Dec_2025_CSV-22_Jan_2026_CSV/MTR_SOP_CHG_RPT.csv
-DATA/Cache/nasr/2026-01-22/extracted/CSV_Data/22_Jan_2026_CSV/25_Dec_2025_CSV-22_Jan_2026_CSV/NAV_BASE_CHG_RPT.csv
-DATA/Cache/nasr/2026-01-22/extracted/CSV_Data/22_Jan_2026_CSV/25_Dec_2025_CSV-22_Jan_2026_CSV/NAV_CKPT_CHG_RPT.csv
-DATA/Cache/nasr/2026-01-22/extracted/CSV_Data/22_Jan_2026_CSV/25_Dec_2025_CSV-22_Jan_2026_CSV/NAV_RMK_CHG_RPT.csv
-DATA/Cache/nasr/2026-01-22/extracted/CSV_Data/22_Jan_2026_CSV/25_Dec_2025_CSV-22_Jan_2026_CSV/PFR_BASE_CHG_RPT.csv
-DATA/Cache/nasr/2026-01-22/extracted/CSV_Data/22_Jan_2026_CSV/25_Dec_2025_CSV-22_Jan_2026_CSV/PFR_RMT_FMT_CHG_RPT.csv
-DATA/Cache/nasr/2026-01-22/extracted/CSV_Data/22_Jan_2026_CSV/25_Dec_2025_CSV-22_Jan_2026_CSV/PFR_SEG_CHG_RPT.csv
-DATA/Cache/nasr/2026-01-22/extracted/CSV_Data/22_Jan_2026_CSV/25_Dec_2025_CSV-22_Jan_2026_CSV/PJA_BASE_CHG_RPT.csv
-DATA/Cache/nasr/2026-01-22/extracted/CSV_Data/22_Jan_2026_CSV/25_Dec_2025_CSV-22_Jan_2026_CSV/PJA_CON_CHG_RPT.csv
-DATA/Cache/nasr/2026-01-22/extracted/CSV_Data/22_Jan_2026_CSV/25_Dec_2025_CSV-22_Jan_2026_CSV/RDR_CHG_RPT.csv
-DATA/Cache/nasr/2026-01-22/extracted/CSV_Data/22_Jan_2026_CSV/25_Dec_2025_CSV-22_Jan_2026_CSV/STAR_APT_CHG_RPT.csv
-DATA/Cache/nasr/2026-01-22/extracted/CSV_Data/22_Jan_2026_CSV/25_Dec_2025_CSV-22_Jan_2026_CSV/STAR_BASE_CHG_RPT.csv
-DATA/Cache/nasr/2026-01-22/extracted/CSV_Data/22_Jan_2026_CSV/25_Dec_2025_CSV-22_Jan_2026_CSV/STAR_RTE_CHG_RPT.csv
-DATA/Cache/nasr/2026-01-22/extracted/CSV_Data/22_Jan_2026_CSV/25_Dec_2025_CSV-22_Jan_2026_CSV/WXL_BASE_CHG_RPT.csv
-DATA/Cache/nasr/2026-01-22/extracted/CSV_Data/22_Jan_2026_CSV/25_Dec_2025_CSV-22_Jan_2026_CSV/WXL_SVC_CHG_RPT.csv
-DATA/Cache/nasr/2026-01-22/extracted/Layout_Data/aff_rf.txt
-DATA/Cache/nasr/2026-01-22/extracted/Layout_Data/apt_rf.txt
-DATA/Cache/nasr/2026-01-22/extracted/Layout_Data/arb_rf.txt
-DATA/Cache/nasr/2026-01-22/extracted/Layout_Data/ats_rf.txt
-DATA/Cache/nasr/2026-01-22/extracted/Layout_Data/awos_rf.txt
-DATA/Cache/nasr/2026-01-22/extracted/Layout_Data/awy_rf.txt
-DATA/Cache/nasr/2026-01-22/extracted/Layout_Data/Cdr_rf.txt
-DATA/Cache/nasr/2026-01-22/extracted/Layout_Data/com_rf.txt
-DATA/Cache/nasr/2026-01-22/extracted/Layout_Data/fix_rf.txt
-DATA/Cache/nasr/2026-01-22/extracted/Layout_Data/fss_rf.txt
-DATA/Cache/nasr/2026-01-22/extracted/Layout_Data/hpf_rf.txt
-DATA/Cache/nasr/2026-01-22/extracted/Layout_Data/ils_rf.txt
-DATA/Cache/nasr/2026-01-22/extracted/Layout_Data/lid_rf.txt
-DATA/Cache/nasr/2026-01-22/extracted/Layout_Data/maa_rf.txt
-DATA/Cache/nasr/2026-01-22/extracted/Layout_Data/mtr_rf.txt
-DATA/Cache/nasr/2026-01-22/extracted/Layout_Data/nav_rf.txt
-DATA/Cache/nasr/2026-01-22/extracted/Layout_Data/pfr_rf.txt
-DATA/Cache/nasr/2026-01-22/extracted/Layout_Data/pja_rf.txt
-DATA/Cache/nasr/2026-01-22/extracted/Layout_Data/Stardp_rf.txt
-DATA/Cache/nasr/2026-01-22/extracted/Layout_Data/Twr_rf.txt
-DATA/Cache/nasr/2026-01-22/extracted/Layout_Data/Wxl_rf.txt
-DATA/Cache/nasr/2026-01-22/extracted/State_&_Country_Codes/COUNTRY.txt
-DATA/Cache/nasr/2026-01-22/extracted/State_&_Country_Codes/STATE.txt
-KML_Output/logfile.log
-KML_Output/T38 Apts 06 Feb 2026.kml
-T-38 Planning Aid.spec
-build/T-38 Planning Aid/Analysis-00.toc
-build/T-38 Planning Aid/base_library.zip
-build/T-38 Planning Aid/EXE-00.toc
-build/T-38 Planning Aid/PKG-00.toc
-build/T-38 Planning Aid/PYZ-00.pyz
-build/T-38 Planning Aid/PYZ-00.toc
-build/T-38 Planning Aid/T-38 Planning Aid.pkg
-build/T-38 Planning Aid/warn-T-38 Planning Aid.txt
-build/T-38 Planning Aid/xref-T-38 Planning Aid.html
-build/T-38 Planning Aid/localpycs/pyimod01_archive.pyc
-build/T-38 Planning Aid/localpycs/pyimod02_importers.pyc
-build/T-38 Planning Aid/localpycs/pyimod03_ctypes.pyc
-build/T-38 Planning Aid/localpycs/pyimod04_pywin32.pyc
-build/T-38 Planning Aid/localpycs/struct.pyc
+Alec/
+# Misc
 .gitlab-ci.yml
 fix_ico.py
 RPLLogoo.jpg
+
+# ── GUI Files build artifacts & cached data ──────────────────
+GUI Files/build/
+GUI Files/dist/
+GUI Files/*.spec
+GUI Files/__pycache__/
+GUI Files/T38 PlanAid GUI Distribution/
+GUI Files/DATA/Cache/**
+GUI Files/DATA/*.csv
+GUI Files/DATA/*.json
+GUI Files/DATA/apt_data/*.csv
+GUI Files/DATA/afd/
