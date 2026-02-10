@@ -208,6 +208,11 @@ class PlanAidGUI:
         self.status_labels: dict[str, tk.Label] = {}
         self.pct_labels: dict[str, tk.Label] = {}
 
+        # Retry state — stored so _retry_from_wb_list can re-run later phases
+        self._cfg = None
+        self._logger = None
+        self._retry_btn_frame: tk.Frame | None = None
+
         self._build_styles()
         self._build_ui()
 
@@ -421,6 +426,8 @@ class PlanAidGUI:
                     self._on_parse_progress(kw["current"], kw["total"], kw.get("name", ""))
                 elif msg_type == "parse_done":
                     self._on_parse_done()
+                elif msg_type == "wb_locked":
+                    self._on_wb_locked(kw.get("detail", ""))
         except queue.Empty:
             pass
         self.root.after(50, self._poll_queue)
@@ -512,6 +519,104 @@ class PlanAidGUI:
             text=f"Error: {detail}  — check logfile.log for details.",
             fg=ACCENT_ERR,
         )
+
+    def _on_wb_locked(self, detail=""):
+        """Handle wb_list.xlsx being locked (e.g. open in Excel)."""
+        # Mark wb_list and downstream steps as errored
+        for step in ("wb_list", "kml", "map"):
+            if self.bars[step].cget("value") < 100:
+                self._on_step_error(step, "File locked")
+
+        # Build a user-friendly message that names the locked file
+        if "masterdict" in detail.lower():
+            file_hint = "T38_masterdict.xlsx"
+        else:
+            file_hint = "wb_list.xlsx"
+        self.overall_label.configure(
+            text=f"{file_hint} is open in another program (Excel?). "
+                 "Please close it and click Try Again.",
+            fg=ACCENT_ERR,
+        )
+
+        # Remove any previous retry button frame
+        if self._retry_btn_frame is not None:
+            self._retry_btn_frame.destroy()
+
+        self._retry_btn_frame = tk.Frame(self.root, bg=BG)
+        self._retry_btn_frame.pack(fill="x", padx=24, pady=(4, 14))
+
+        tk.Button(
+            self._retry_btn_frame, text="Try Again", font=FONT_SMALL,
+            fg=FG, bg=ACCENT, activebackground="#1A6DBF",
+            activeforeground=FG, bd=0, padx=18, pady=5,
+            cursor="hand2",
+            command=self._retry_from_wb_list,
+        ).pack(side="left")
+
+    def _retry_from_wb_list(self):
+        """Re-run wb_list update + KML/map generation after the user closes the file."""
+        # Clean up the retry button
+        if self._retry_btn_frame is not None:
+            self._retry_btn_frame.destroy()
+            self._retry_btn_frame = None
+
+        # Reset progress bars for the steps we're retrying
+        for step in ("wb_list", "kml", "map"):
+            self.bars[step].configure(
+                style="NASA.Horizontal.TProgressbar", value=0
+            )
+            self.pct_labels[step].configure(text="", fg=FG_DIM)
+            self.status_labels[step].configure(text="Retrying…", fg=ACCENT)
+
+        self.overall_label.configure(text="Retrying…", fg=FG_DIM)
+
+        t = threading.Thread(
+            target=self._run_wb_and_kml, daemon=True
+        )
+        t.start()
+
+    def _run_wb_and_kml(self):
+        """Worker thread: retry just the wb_list update and KML/map build."""
+        cfg = self._cfg
+        logger = self._logger
+        if cfg is None or logger is None:
+            self._send("fatal", detail="Internal error: missing config for retry.")
+            return
+
+        # ── wb_list update ──────────────────────────────────────────
+        self._send("step_progress", step="wb_list", pct=10, phase="Updating…")
+        try:
+            Data_Acquisition.update_wb_list(cfg)
+            self._send("step_done", step="wb_list")
+        except PermissionError:
+            logger.exception("wb_list.xlsx is still locked")
+            self._send("wb_locked", detail="wb_list.xlsx is still open")
+            return
+        except Exception as exc:
+            logger.exception("wb_list update failed on retry")
+            self._send("step_error", step="wb_list", detail=str(exc))
+
+        # ── KML / Map ───────────────────────────────────────────────
+        kml_path = None
+        map_path = None
+        try:
+            self._run_kml_with_progress(cfg, logger)
+            kml_files = list(cfg.output_folder.glob("*.kml"))
+            if kml_files:
+                kml_path = str(max(kml_files, key=lambda f: f.stat().st_mtime))
+            map_files = list(cfg.output_folder.glob("*.html"))
+            if map_files:
+                map_path = str(max(map_files, key=lambda f: f.stat().st_mtime))
+        except PermissionError:
+            logger.exception("KML generation failed — wb_list.xlsx still locked")
+            self._send("wb_locked", detail="wb_list.xlsx is still open")
+            return
+        except Exception as e:
+            logger.exception("KML/Map generation failed on retry")
+            self._send("step_error", step="kml", detail=str(e))
+            self._send("step_error", step="map", detail=str(e))
+
+        self._send("all_done", kml_path=kml_path, map_path=map_path)
 
     # ── Credits popup ─────────────────────────────────────────────────
     def _show_credits(self):
@@ -676,6 +781,8 @@ class PlanAidGUI:
 
         cfg = AppConfig()
         logger = setup_logging(cfg.output_folder)
+        self._cfg = cfg
+        self._logger = logger
 
         # ── Pre-flight house-keeping (same as original main()) ──────
         try:
@@ -751,6 +858,10 @@ class PlanAidGUI:
             try:
                 Data_Acquisition.update_wb_list(cfg)
                 self._send("step_done", step="wb_list")
+            except PermissionError as exc:
+                logger.exception("wb_list.xlsx is locked by another process")
+                self._send("wb_locked", detail=str(exc))
+                return  # Stop pipeline — user must close the file first
             except Exception as exc:
                 logger.exception("wb_list update failed")
                 self._send("step_error", step="wb_list", detail=str(exc))
@@ -771,6 +882,10 @@ class PlanAidGUI:
             map_files = list(cfg.output_folder.glob("*.html"))
             if map_files:
                 map_path = str(max(map_files, key=lambda f: f.stat().st_mtime))
+        except PermissionError as e:
+            logger.exception("KML generation failed — wb_list.xlsx appears locked")
+            self._send("wb_locked", detail=str(e))
+            return
         except Exception as e:
             logger.exception("KML/Map generation failed")
             self._send("step_error", step="kml", detail=str(e))
@@ -904,9 +1019,12 @@ class PlanAidGUI:
 
         # Save master dict
         import pandas as pd
-        pd.DataFrame.from_dict(master_dict, orient='index').to_excel(
-            cfg.output_folder / 'T38_masterdict.xlsx'
-        )
+        try:
+            pd.DataFrame.from_dict(master_dict, orient='index').to_excel(
+                cfg.output_folder / 'T38_masterdict.xlsx'
+            )
+        except PermissionError:
+            raise PermissionError("T38_masterdict.xlsx is open in another program")
         self._send("step_progress", step="kml", pct=55, phase="Saved Excel")
 
         # Phase 3: Generate KML (55 → 80%)

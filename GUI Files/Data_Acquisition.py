@@ -686,6 +686,9 @@ def update_wb_list(cfg):
         wb.save(wb_path)
         logger.info("wb_list.xlsx updated successfully.")
 
+    except PermissionError:
+        logger.error("wb_list.xlsx is locked by another process (close Excel?).")
+        raise  # Let callers detect the file-lock and offer a retry
     except Exception as e:
         logger.error(f"Failed to update wb_list.xlsx: {e}")
 
