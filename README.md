@@ -16,7 +16,7 @@ Two versions are available:
 | **Interface** | Dark-themed GUI with progress bars | Command-line / terminal output |
 | **Console window** | No | Yes |
 
-Download the app from the 'Releases' section, or build either version from source.
+Download the app from the 'Releases' section, or build either version by running their respective "build_exe" python script.
 
 ## Overview
 
@@ -40,7 +40,7 @@ The GUI version (`GUI Files/`) is the recommended way to run the Planning Aid. I
 
 ### Getting the GUI (Easiest Way)
 
-> **Note:** Windows may block unsigned `.exe` files. If the download doesn't work, use the build method below.
+> **Note:** Windows may block unsigned `.exe` files. If the download doesn't work, just run the build_exe python script included in the main folder.
 
 1. Go to the [latest release](https://github.com/erob1822/T38_Planning_Aid/releases/latest) and download the ZIP for your operating system
 2. Extract the ZIP to a folder of your choice
@@ -90,7 +90,7 @@ The CLI version (root directory) runs in the terminal and is suited for develope
 
 ### Getting the CLI (Easiest Way)
 
-> **Note:** Windows may block unsigned `.exe` files. If the download doesn't work, use the build_exe method described further down.
+> **Note:** Windows may block unsigned `.exe` files. If the download doesn't work, just run the build_exe python script included in the main folder.
 
 1. Go to the [latest release](https://github.com/erob1822/T38_Planning_Aid/releases/latest) and download the ZIP for your operating system:
    - **Windows**: [**T38-PlanAid-Windows.zip**](https://github.com/erob1822/T38_Planning_Aid/releases/latest/download/T38-PlanAid-Windows.zip)
