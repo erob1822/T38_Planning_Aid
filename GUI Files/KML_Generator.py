@@ -485,25 +485,37 @@ def generate_map(master_dict: dict, date_str: str, exp_str: str = "") -> Path:
     for d, pin in classify_airports(master_dict):
         icao = d['ICAO Name']
 
+        # HTML-safe versions of the standard text blocks
+        note_html = NOTE.replace('<br/>', '<br>')
+        footer_html = FOOTER.replace('<br/>', '<br>')
+
+        # Runway output cleaned for HTML popups
+        rwy_out_html = d['Runway Output'].replace('<br/>', '<br>')
+        comment = str(d['Comments']).replace('<br/>', ' ').replace('nan', '').strip()
+        cat_html = d['Category'].replace('<br/>', '<br>').strip() if d['Category'] else ''
+
         # Blacklisted airports: red marker with blacklist info
         if pin == 'blacklist':
-            comment = str(d['Comments']).replace('<br/>', ' ').replace('nan', '').strip()
             popup_html = (
-                f"<b>{icao}</b><br/>"
-                f"<span style='color:red'><b>BLACKLISTED - T-38 operations not authorized.</b></span><br/>"
+                f"<b>{icao}</b><br>"
+                f"<span style='color:red'><b>BLACKLISTED - T-38 operations not authorized.</b></span><br>"
             )
             if d['Blacklist Reason']:
-                popup_html += f"<span style='color:red'>Reason: {d['Blacklist Reason']}</span><br/>"
-            popup_html += f"LDA: {d['Runway Length']} ft<br/>"
+                popup_html += f"<span style='color:red'>Reason: {d['Blacklist Reason']}</span><br>"
+            popup_html += (
+                f"<br>Longest Landing Distance Available (LDA): {d['Runway Length']} ft<br>"
+            )
+            if cat_html:
+                popup_html += f"<span style='color:red'>{cat_html}</span><br>"
+            popup_html += f"<br>Runways with Declared LDAs &gt;7000:{rwy_out_html}"
+            popup_html += note_html
             if comment:
-                popup_html += f"Comments: {comment}<br/>"
-            if d['Category']:
-                cat_text = d['Category'].replace('<br/>', '').strip()
-                popup_html += f"<span style='color:red'>{cat_text}</span><br/>"
+                popup_html += f"<br><br>Comments: {comment}<br>"
+            popup_html += footer_html
 
             folium.Marker(
                 location=[d['Latitude'], d['Longitude']],
-                popup=folium.Popup(popup_html, max_width=300),
+                popup=folium.Popup(popup_html, max_width=400),
                 tooltip=f"{icao}  {d['Runway Length']} ft [BLACKLISTED]",
                 icon=folium.Icon(color='red', icon='remove-sign', prefix='glyphicon'),
             ).add_to(m)
@@ -520,25 +532,48 @@ def generate_map(master_dict: dict, date_str: str, exp_str: str = "") -> Path:
             color = _PIN_COLORS.get(pin, 'blue')
             icon = 'plane'
 
-        # Popup content
-        comment = str(d['Comments']).replace('<br/>', ' ').replace('nan', '').strip()
-        popup_html = (
-            f"<b>{icao}</b><br/>"
-            f"LDA: {d['Runway Length']} ft<br/>"
-            f"Fuel: {'Yes' if d['Contract Gas'] else 'No'}<br/>"
-            f"JASU: {'Yes' if d['JASU'] else 'No'}<br/>"
-        )
-        if d['Recently Landed']:
-            popup_html += f"Last landed: {d['Date Landed']}<br/>"
-        if comment:
-            popup_html += f"Comments: {comment}<br/>"
-        if d['Category']:
-            cat_text = d['Category'].replace('<br/>', '').strip()
-            popup_html += f"<span style='color:red'>{cat_text}</span><br/>"
+        # Build popup content matching KML descriptions
+        if pin == 'green':
+            crew = str(d['Front Seat']) if d['Front Seat'] else "Not Listed"
+            if d['Back Seat']:
+                crew += f" / {d['Back Seat']}"
+            popup_html = (
+                f"<b>{icao}</b><br>"
+                f"Has supported T38s in the past, start cart may or may not "
+                f"be listed on A/FD, Call FBO.<br>"
+                f"Government Contract Gas Available.<br>"
+                f"<br>Longest Landing Distance Available (LDA): {d['Runway Length']} ft<br>"
+            )
+            if cat_html:
+                popup_html += f"<span style='color:red'>{cat_html}</span><br>"
+            popup_html += f"<br>Runways with Declared LDAs &gt;7000:{rwy_out_html}"
+            popup_html += (
+                f"<br><br>Date Last Landed: {d['Date Landed']}<br>"
+                f"Crew: {crew}<br>"
+            )
+            popup_html += note_html
+            if comment:
+                popup_html += f"<br><br>Comments: {comment}<br>"
+            popup_html += footer_html
+        else:
+            cart = "Air start cart listed" if pin == 'blue' else "No start cart listed"
+            popup_html = (
+                f"<b>{icao}</b><br>"
+                f"{cart} on A/FD, Call FBO.<br>"
+                f"Government Contract Gas Available.<br>"
+                f"<br>Longest Landing Distance Available (LDA): {d['Runway Length']} ft<br>"
+            )
+            if cat_html:
+                popup_html += f"<span style='color:red'>{cat_html}</span><br>"
+            popup_html += f"<br>Runways with Declared LDAs &gt;7000:{rwy_out_html}"
+            popup_html += note_html
+            if comment:
+                popup_html += f"<br><br>Comments: {comment}<br>"
+            popup_html += footer_html
 
         folium.Marker(
             location=[d['Latitude'], d['Longitude']],
-            popup=folium.Popup(popup_html, max_width=300),
+            popup=folium.Popup(popup_html, max_width=400),
             tooltip=f"{icao}  {d['Runway Length']} ft",
             icon=folium.Icon(color=color, icon=icon, prefix='glyphicon'),
         ).add_to(m)
