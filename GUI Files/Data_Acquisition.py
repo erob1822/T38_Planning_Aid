@@ -491,7 +491,7 @@ def _download_and_extract_zip(source, label):
         with open(zip_path, 'wb') as f, tqdm(
             total=total_size, unit='B', unit_scale=True, desc=label
         ) as pbar:
-            for chunk in r.iter_content(chunk_size=8192):
+            for chunk in r.iter_content(chunk_size=131072):
                 f.write(chunk)
                 pbar.update(len(chunk))
     
@@ -610,7 +610,7 @@ def parse_jasu(cfg, progress_cb=None):
     
     with ThreadPoolExecutor() as executor:
         futures = {executor.submit(process_pdf, p): p for p in pdf_files}
-        for i, future in enumerate(tqdm(as_completed(futures), total=len(futures), desc="JASU Parsing"), 1):
+        for i, future in enumerate(as_completed(futures), 1):
             pdf_path = futures[future]
             if progress_cb:
                 progress_cb(i, total_pdfs, pdf_path.stem)

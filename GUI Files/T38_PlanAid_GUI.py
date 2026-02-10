@@ -49,13 +49,16 @@ class _GUIProgressBar:
         self.iterable = iterable
         self.total = total or 0
         self.n = 0
+        self._last_pct = -1     # throttle: only fire when % changes
 
     def update(self, n=1):
         self.n += n
         if _progress_callback and self.total:
             frac = min(self.n / self.total, 1.0)
-            pct = _progress_pct_base + frac * _progress_pct_span
-            _progress_callback(int(pct * 100))
+            pct = int((_progress_pct_base + frac * _progress_pct_span) * 100)
+            if pct != self._last_pct:
+                self._last_pct = pct
+                _progress_callback(pct)
 
     def __enter__(self):
         return self
@@ -515,14 +518,50 @@ class PlanAidGUI:
             except Exception:
                 pass
 
+        # ── Header row with T-38 photo + title + RPL logo ──
+        cred_header = tk.Frame(win, bg=BG)
+        cred_header.pack(fill="x", padx=24, pady=(18, 2))
+        cred_header.columnconfigure(1, weight=1)
+
+        # T-38 photo (left)
+        win._t38_img = None
+        banner_path = BUNDLE_DIR / "NASAT38s.png"
+        if banner_path.exists() and HAS_PIL:
+            try:
+                t38 = Image.open(str(banner_path))
+                ratio = 40 / t38.height
+                t38 = t38.resize((int(t38.width * ratio), 40), Image.LANCZOS)
+                win._t38_img = ImageTk.PhotoImage(t38)
+                tk.Label(
+                    cred_header, image=win._t38_img, bg=BG
+                ).grid(row=0, column=0, sticky="w")
+            except Exception:
+                pass
+
+        # Centered title + version
+        cred_title = tk.Frame(cred_header, bg=BG)
+        cred_title.grid(row=0, column=1)
         tk.Label(
-            win, text="T-38 Planning Aid", font=FONT_TITLE,
+            cred_title, text="T-38 Planning Aid", font=FONT_TITLE,
             fg=FG, bg=BG
-        ).pack(pady=(18, 2))
+        ).pack()
         tk.Label(
-            win, text=AppConfig.version, font=FONT_SMALL,
+            cred_title, text=AppConfig.version, font=FONT_SMALL,
             fg=FG_DIM, bg=BG
         ).pack()
+
+        # RPL logo (right)
+        win._logo_img = None
+        if ico_path.exists() and HAS_PIL:
+            try:
+                img = Image.open(str(ico_path))
+                img = img.resize((40, 40), Image.LANCZOS)
+                win._logo_img = ImageTk.PhotoImage(img)
+                tk.Label(
+                    cred_header, image=win._logo_img, bg=BG
+                ).grid(row=0, column=2, sticky="e")
+            except Exception:
+                pass
 
         tk.Frame(win, bg=BORDER, height=1).pack(fill="x", padx=30, pady=(12, 10))
 
@@ -664,15 +703,25 @@ class PlanAidGUI:
         try:
             cache_mgr = Data_Acquisition.CycleCache(cfg)
 
-            for name in ["flights", "comments", "fuel", "nasr", "dcs"]:
+            # Run small/fast sources in parallel, then big FAA sources sequentially
+            small_sources = ["flights", "comments", "fuel"]
+            big_sources = ["nasr", "dcs"]
+
+            def _run_one(name):
                 source = cache_mgr.sources.get(name)
                 if source is None:
-                    continue
+                    return
                 try:
                     self._run_source_with_progress(name, source, logger)
                 except Exception as exc:
                     logger.exception(f"Source {name} failed")
                     self._send("step_error", step=name, detail=str(exc))
+
+            with Data_Acquisition.ThreadPoolExecutor(max_workers=3) as pool:
+                pool.map(_run_one, small_sources)
+
+            for name in big_sources:
+                _run_one(name)
 
             cache_mgr._save_cache()
 
@@ -750,12 +799,13 @@ class PlanAidGUI:
         # Phase 3: Download (20 → 80%)  — tqdm hook provides byte-level updates
         self._send("step_progress", step=name, pct=20, phase="Downloading…")
 
-        # Wire up the tqdm shim so it reports to this step
-        _progress_pct_base = 0.20
-        _progress_pct_span = 0.55
-        _progress_callback = lambda pct: self._send(
-            "step_progress", step=name, pct=pct, phase="Downloading…"
-        )
+        # Wire up the tqdm shim for sources that stream large zips (nasr, dcs)
+        if name in ("nasr", "dcs"):
+            _progress_pct_base = 0.20
+            _progress_pct_span = 0.55
+            _progress_callback = lambda pct: self._send(
+                "step_progress", step=name, pct=pct, phase="Downloading…"
+            )
 
         try:
             source.timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
