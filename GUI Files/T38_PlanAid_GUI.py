@@ -391,12 +391,23 @@ class PlanAidGUI:
         )
         self.overall_label.pack(side="left", fill="x", expand=True)
 
+        # Right-side button stack (Map Legend above Credits)
+        btn_stack = tk.Frame(self.bottom_frame, bg=BG)
+        btn_stack.pack(side="right")
+
         tk.Button(
-            self.bottom_frame, text="Credits", font=FONT_SMALL,
+            btn_stack, text="Map Legend", font=FONT_SMALL,
+            fg=FG, bg="#3A4A6B", activebackground="#2C3B57",
+            activeforeground=FG, bd=0, padx=12, pady=4,
+            cursor="hand2", command=self._show_legend
+        ).pack(pady=(0, 4))
+
+        tk.Button(
+            btn_stack, text="Credits", font=FONT_SMALL,
             fg=FG, bg="#3A4A6B", activebackground="#2C3B57",
             activeforeground=FG, bd=0, padx=12, pady=4,
             cursor="hand2", command=self._show_credits
-        ).pack(side="right")
+        ).pack()
 
     # ── Thread-safe messaging ────────────────────────────────────────
     def _send(self, msg_type: str, **kwargs):
@@ -617,6 +628,171 @@ class PlanAidGUI:
             self._send("step_error", step="map", detail=str(e))
 
         self._send("all_done", kml_path=kml_path, map_path=map_path)
+
+    # ── Map Legend popup ──────────────────────────────────────────────
+    def _show_legend(self):
+        """Open a styled popup showing the KML / map pin colour legend."""
+        win = tk.Toplevel(self.root)
+        win.title("Map Legend — T-38 Planning Aid")
+        win.configure(bg=BG)
+        win.resizable(False, False)
+
+        cw, ch = 620, 700
+        sx = self.root.winfo_x() + (self.win_w - cw) // 2
+        sy = self.root.winfo_y() + 10
+        win.geometry(f"{cw}x{ch}+{sx}+{sy}")
+
+        ico_path = BUNDLE_DIR / "RPLLogo.ico"
+        if ico_path.exists():
+            try:
+                win.iconbitmap(str(ico_path))
+            except Exception:
+                pass
+
+        # ── Header row with T-38 photo + title + RPL logo ──
+        leg_header = tk.Frame(win, bg=BG)
+        leg_header.pack(fill="x", padx=24, pady=(18, 2))
+        leg_header.columnconfigure(1, weight=1)
+
+        # T-38 photo (left)
+        win._t38_img = None
+        banner_path = BUNDLE_DIR / "NASAT38s.png"
+        if banner_path.exists() and HAS_PIL:
+            try:
+                t38 = Image.open(str(banner_path))
+                ratio = 40 / t38.height
+                t38 = t38.resize((int(t38.width * ratio), 40), Image.LANCZOS)
+                win._t38_img = ImageTk.PhotoImage(t38)
+                tk.Label(
+                    leg_header, image=win._t38_img, bg=BG
+                ).grid(row=0, column=0, sticky="w")
+            except Exception:
+                pass
+
+        # Centered title
+        leg_title = tk.Frame(leg_header, bg=BG)
+        leg_title.grid(row=0, column=1)
+        tk.Label(
+            leg_title, text="Map Legend", font=FONT_TITLE,
+            fg=FG, bg=BG
+        ).pack()
+        tk.Label(
+            leg_title, text="Pin Color Reference", font=FONT_SMALL,
+            fg=FG_DIM, bg=BG
+        ).pack()
+
+        # RPL logo (right)
+        win._logo_img = None
+        if ico_path.exists() and HAS_PIL:
+            try:
+                img = Image.open(str(ico_path))
+                img = img.resize((40, 40), Image.LANCZOS)
+                win._logo_img = ImageTk.PhotoImage(img)
+                tk.Label(
+                    leg_header, image=win._logo_img, bg=BG
+                ).grid(row=0, column=2, sticky="e")
+            except Exception:
+                pass
+
+        tk.Frame(win, bg=BORDER, height=1).pack(fill="x", padx=30, pady=(12, 10))
+
+        # ── Inclusion criteria ──
+        tk.Label(
+            win, text="Airport Inclusion Criteria", font=("Segoe UI Semibold", 12),
+            fg=ACCENT, bg=BG
+        ).pack(anchor="w", padx=30)
+
+        criteria = [
+            "• Must be in CONUS with a valid ICAO identifier (K___)",
+            "• Longest declared LDA must be ≥ 7,000 ft",
+            "• Must have government contract fuel on file",
+            "• Blacklisted airports are always shown (regardless of LDA / fuel)",
+        ]
+        for c in criteria:
+            tk.Label(
+                win, text=c, font=FONT_SMALL,
+                fg=FG, bg=BG, anchor="w"
+            ).pack(fill="x", padx=36, pady=1)
+
+        tk.Frame(win, bg=BORDER, height=1).pack(fill="x", padx=30, pady=(12, 10))
+
+        # ── Pin color legend ──
+        tk.Label(
+            win, text="Pin Colors", font=("Segoe UI Semibold", 12),
+            fg=ACCENT, bg=BG
+        ).pack(anchor="w", padx=30)
+
+        # (color_swatch, label, description)
+        pins = [
+            ("#27AE60", "Green Pushpin",
+             "Recently landed by a T-38 crew (no issues flagged), "
+             "OR airport is on the Whitelist. Known to work — call FBO to confirm."),
+            ("#2E86DE", "Blue Pushpin",
+             "JASU (air-start cart) is listed in the A/FD but no recent T-38 ops. "
+             "Good to go — call FBO to verify cart availability."),
+            ("#F1C40F", "Yellow Pushpin",
+             "No JASU listed in the A/FD and no recent T-38 ops. "
+             "Call FBO to verify start-cart availability before planning."),
+            ("#E74C3C", "Red Diamond  (Category 2 / 3)",
+             "Airport is categorized as Cat 2 or Cat 3. "
+             "Requires extra planning and/or approval before use."),
+            ("#C0392B", "Red Circle  (Category 1)",
+             "Category 1 airport — T-38 operations are prohibited."),
+            ("#922B21", "Red Pushpin  (Blacklisted)",
+             "Blacklisted airport — T-38 operations not authorized. "
+             "Shown regardless of runway length or fuel availability."),
+        ]
+
+        for color_hex, title, desc in pins:
+            row = tk.Frame(win, bg=BG)
+            row.pack(fill="x", padx=30, pady=4)
+
+            # Color swatch
+            swatch = tk.Canvas(row, width=18, height=18, bg=BG,
+                               highlightthickness=0)
+            swatch.pack(side="left", padx=(0, 8), pady=2)
+            swatch.create_oval(2, 2, 16, 16, fill=color_hex, outline=color_hex)
+
+            # Text
+            text_frame = tk.Frame(row, bg=BG)
+            text_frame.pack(side="left", fill="x", expand=True)
+            tk.Label(
+                text_frame, text=title, font=("Segoe UI Semibold", 10),
+                fg=FG, bg=BG, anchor="w"
+            ).pack(anchor="w")
+            tk.Label(
+                text_frame, text=desc, font=FONT_SMALL,
+                fg=FG_DIM, bg=BG, anchor="w", wraplength=480, justify="left"
+            ).pack(anchor="w")
+
+        tk.Frame(win, bg=BORDER, height=1).pack(fill="x", padx=30, pady=(12, 10))
+
+        # ── Priority note ──
+        tk.Label(
+            win, text="Priority Order", font=("Segoe UI Semibold", 12),
+            fg=ACCENT, bg=BG
+        ).pack(anchor="w", padx=30)
+
+        priority_notes = [
+            "1.  Blacklisted → always Red Pushpin (overrides everything)",
+            "2.  Category 1 → Red Circle  |  Category 2/3 → Red Diamond",
+            "3.  Recently Landed (no issues) or Whitelisted → Green",
+            "4.  JASU listed in A/FD → Blue",
+            "5.  None of the above → Yellow",
+        ]
+        for n in priority_notes:
+            tk.Label(
+                win, text=n, font=FONT_SMALL,
+                fg=FG, bg=BG, anchor="w"
+            ).pack(fill="x", padx=36, pady=1)
+
+        # ── Close button ──
+        tk.Button(
+            win, text="Close", font=FONT_SMALL,
+            fg=FG, bg="#3A4A6B", activebackground="#2C3B57",
+            activeforeground=FG, bd=0, padx=20, pady=4,
+            cursor="hand2", command=win.destroy
+        ).pack(pady=(12, 16))
 
     # ── Credits popup ─────────────────────────────────────────────────
     def _show_credits(self):
