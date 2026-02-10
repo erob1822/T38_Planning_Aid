@@ -2,8 +2,7 @@
 T38_PlanAid_GUI.py - GUI Version of T-38 PlanAid (Testing Only)
 
 Replaces the command-window interface with a clean tkinter GUI showing
-progress bars for each data-acquisition step. Designed for pilots —
-only shows what they need to know.
+progress bars for each data-acquisition step.
 """
 
 # Standard library imports
@@ -213,6 +212,11 @@ class PlanAidGUI:
         self._logger = None
         self._retry_btn_frame: tk.Frame | None = None
 
+        # Pre-load popup images once so _show_legend/_show_credits skip disk I/O
+        self._popup_t38_img = None   # 40px T-38 banner for popups
+        self._popup_logo_img = None  # 40px RPL logo for popups
+        self._load_popup_images()
+
         self._build_styles()
         self._build_ui()
 
@@ -250,6 +254,28 @@ class PlanAidGUI:
             thickness=14,
             borderwidth=0,
         )
+
+    def _load_popup_images(self):
+        """Pre-load 40 px images used by _show_legend and _show_credits."""
+        if not HAS_PIL:
+            return
+        banner_path = BUNDLE_DIR / "NASAT38s.png"
+        if banner_path.exists():
+            try:
+                t38 = Image.open(str(banner_path))
+                ratio = 40 / t38.height
+                t38 = t38.resize((int(t38.width * ratio), 40), Image.LANCZOS)
+                self._popup_t38_img = ImageTk.PhotoImage(t38)
+            except Exception:
+                pass
+        ico_path = BUNDLE_DIR / "RPLLogo.ico"
+        if ico_path.exists():
+            try:
+                img = Image.open(str(ico_path))
+                img = img.resize((40, 40), Image.LANCZOS)
+                self._popup_logo_img = ImageTk.PhotoImage(img)
+            except Exception:
+                pass
 
     # ── Layout ───────────────────────────────────────────────────────
     def _build_ui(self):
@@ -606,6 +632,7 @@ class PlanAidGUI:
         except Exception as exc:
             logger.exception("wb_list update failed on retry")
             self._send("step_error", step="wb_list", detail=str(exc))
+            return  # Don't generate KML from stale/missing data
 
         # ── KML / Map ───────────────────────────────────────────────
         kml_path = None
@@ -654,20 +681,11 @@ class PlanAidGUI:
         leg_header.pack(fill="x", padx=24, pady=(18, 2))
         leg_header.columnconfigure(1, weight=1)
 
-        # T-38 photo (left)
-        win._t38_img = None
-        banner_path = BUNDLE_DIR / "NASAT38s.png"
-        if banner_path.exists() and HAS_PIL:
-            try:
-                t38 = Image.open(str(banner_path))
-                ratio = 40 / t38.height
-                t38 = t38.resize((int(t38.width * ratio), 40), Image.LANCZOS)
-                win._t38_img = ImageTk.PhotoImage(t38)
-                tk.Label(
-                    leg_header, image=win._t38_img, bg=BG
-                ).grid(row=0, column=0, sticky="w")
-            except Exception:
-                pass
+        # T-38 photo (left) — use cached image
+        if self._popup_t38_img:
+            tk.Label(
+                leg_header, image=self._popup_t38_img, bg=BG
+            ).grid(row=0, column=0, sticky="w")
 
         # Centered title
         leg_title = tk.Frame(leg_header, bg=BG)
@@ -681,18 +699,11 @@ class PlanAidGUI:
             fg=FG_DIM, bg=BG
         ).pack()
 
-        # RPL logo (right)
-        win._logo_img = None
-        if ico_path.exists() and HAS_PIL:
-            try:
-                img = Image.open(str(ico_path))
-                img = img.resize((40, 40), Image.LANCZOS)
-                win._logo_img = ImageTk.PhotoImage(img)
-                tk.Label(
-                    leg_header, image=win._logo_img, bg=BG
-                ).grid(row=0, column=2, sticky="e")
-            except Exception:
-                pass
+        # RPL logo (right) — use cached image
+        if self._popup_logo_img:
+            tk.Label(
+                leg_header, image=self._popup_logo_img, bg=BG
+            ).grid(row=0, column=2, sticky="e")
 
         tk.Frame(win, bg=BORDER, height=1).pack(fill="x", padx=30, pady=(12, 10))
 
@@ -706,7 +717,6 @@ class PlanAidGUI:
             "• Must be in CONUS with a valid ICAO identifier (K___)",
             "• Longest declared LDA must be ≥ 7,000 ft",
             "• Must have government contract fuel on file",
-            "• Blacklisted airports are always shown (regardless of LDA / fuel)",
         ]
         for c in criteria:
             tk.Label(
@@ -739,8 +749,7 @@ class PlanAidGUI:
             ("#C0392B", "Red Circle  (Category 1)",
              "Category 1 airport — T-38 operations are prohibited."),
             ("#922B21", "Red Pushpin  (Blacklisted)",
-             "Blacklisted airport — T-38 operations not authorized. "
-             "Shown regardless of runway length or fuel availability."),
+             "Blacklisted airport — T-38 operations not authorized."),
         ]
 
         for color_hex, title, desc in pins:
@@ -766,25 +775,6 @@ class PlanAidGUI:
             ).pack(anchor="w")
 
         tk.Frame(win, bg=BORDER, height=1).pack(fill="x", padx=30, pady=(12, 10))
-
-        # ── Priority note ──
-        tk.Label(
-            win, text="Priority Order", font=("Segoe UI Semibold", 12),
-            fg=ACCENT, bg=BG
-        ).pack(anchor="w", padx=30)
-
-        priority_notes = [
-            "1.  Blacklisted → always Red Pushpin (overrides everything)",
-            "2.  Category 1 → Red Circle  |  Category 2/3 → Red Diamond",
-            "3.  Recently Landed (no issues) or Whitelisted → Green",
-            "4.  JASU listed in A/FD → Blue",
-            "5.  None of the above → Yellow",
-        ]
-        for n in priority_notes:
-            tk.Label(
-                win, text=n, font=FONT_SMALL,
-                fg=FG, bg=BG, anchor="w"
-            ).pack(fill="x", padx=36, pady=1)
 
         # ── Close button ──
         tk.Button(
@@ -819,20 +809,11 @@ class PlanAidGUI:
         cred_header.pack(fill="x", padx=24, pady=(18, 2))
         cred_header.columnconfigure(1, weight=1)
 
-        # T-38 photo (left)
-        win._t38_img = None
-        banner_path = BUNDLE_DIR / "NASAT38s.png"
-        if banner_path.exists() and HAS_PIL:
-            try:
-                t38 = Image.open(str(banner_path))
-                ratio = 40 / t38.height
-                t38 = t38.resize((int(t38.width * ratio), 40), Image.LANCZOS)
-                win._t38_img = ImageTk.PhotoImage(t38)
-                tk.Label(
-                    cred_header, image=win._t38_img, bg=BG
-                ).grid(row=0, column=0, sticky="w")
-            except Exception:
-                pass
+        # T-38 photo (left) — use cached image
+        if self._popup_t38_img:
+            tk.Label(
+                cred_header, image=self._popup_t38_img, bg=BG
+            ).grid(row=0, column=0, sticky="w")
 
         # Centered title + version
         cred_title = tk.Frame(cred_header, bg=BG)
@@ -846,18 +827,11 @@ class PlanAidGUI:
             fg=FG_DIM, bg=BG
         ).pack()
 
-        # RPL logo (right)
-        win._logo_img = None
-        if ico_path.exists() and HAS_PIL:
-            try:
-                img = Image.open(str(ico_path))
-                img = img.resize((40, 40), Image.LANCZOS)
-                win._logo_img = ImageTk.PhotoImage(img)
-                tk.Label(
-                    cred_header, image=win._logo_img, bg=BG
-                ).grid(row=0, column=2, sticky="e")
-            except Exception:
-                pass
+        # RPL logo (right) — use cached image
+        if self._popup_logo_img:
+            tk.Label(
+                cred_header, image=self._popup_logo_img, bg=BG
+            ).grid(row=0, column=2, sticky="e")
 
         tk.Frame(win, bg=BORDER, height=1).pack(fill="x", padx=30, pady=(12, 10))
 
@@ -1041,6 +1015,7 @@ class PlanAidGUI:
             except Exception as exc:
                 logger.exception("wb_list update failed")
                 self._send("step_error", step="wb_list", detail=str(exc))
+                return  # Don't generate KML from stale/missing data
 
         except Exception as e:
             logger.exception("Data acquisition failed")
@@ -1172,7 +1147,7 @@ class PlanAidGUI:
     # ── KML / map progress orchestration ─────────────────────────────
     def _run_kml_with_progress(self, cfg, logger):
         """Run KML + map generation with progress reporting."""
-        global DATA, OUTPUT, APP_DIR_KML
+        global DATA, OUTPUT
 
         # Point KML_Generator at the right folders
         KML_Generator.DATA = cfg.data_folder

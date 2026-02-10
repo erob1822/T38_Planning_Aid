@@ -290,6 +290,53 @@ def create_kml_styles() -> dict[str, Style]:
     return styles
 
 
+# ── Shared filter + pin-color classification ─────────────────────────
+
+def classify_airports(master_dict: dict):
+    """
+    Yield (airport_dict, pin_color) for every airport that should appear
+    on the KML / interactive map.
+
+    Pin colors returned:
+      'blacklist', 'green', 'blue', 'yellow'
+      (category overrides are left to the caller because KML and Folium
+       express them differently — style object vs. icon name)
+
+    Filtering rules (single source of truth):
+      • Skip OCONUS / non-K identifiers
+      • Blacklisted → always included (pin='blacklist')
+      • Otherwise must have LDA ≥ 7 000 ft AND contract fuel
+    """
+    for d in master_dict.values():
+        icao = d['ICAO Name']
+
+        # Skip OCONUS and non-CONUS identifiers
+        if d['OCONUS']:
+            continue
+        if not (isinstance(icao, str) and icao.startswith('K') and len(icao) == 4):
+            continue
+
+        # Blacklisted airports bypass runway/fuel filters
+        if d['Black List']:
+            yield d, 'blacklist'
+            continue
+
+        # Standard filters
+        if d['Runway Length'] < 7000 or not d['Contract Gas']:
+            continue
+
+        # Pin color logic
+        recently_landed = d['Recently Landed'] and not d['Issues with Recently Landed']
+        whitelisted = d['White List']
+
+        if recently_landed or whitelisted:
+            yield d, 'green'
+        elif d['JASU']:
+            yield d, 'blue'
+        else:
+            yield d, 'yellow'
+
+
 def generate_kml(master_dict: dict, wb: dict, date_str: str, version: str, exp_str: str = "") -> int:
     """
     Generate KML file with color-coded airport pins.
@@ -317,17 +364,11 @@ def generate_kml(master_dict: dict, wb: dict, date_str: str, version: str, exp_s
     
     txt_lines = []
     
-    for d in master_dict.values():
+    for d, pin in classify_airports(master_dict):
         icao = d['ICAO Name']
-        
-        # Always skip OCONUS and non-CONUS identifiers
-        if d['OCONUS']:
-            continue
-        if not (isinstance(icao, str) and icao.startswith('K') and len(icao) == 4):
-            continue
-        
-        # Blacklisted airports: red pin with blacklist info (no runway/fuel filter)
-        if d['Black List']:
+
+        # Blacklisted airports: red pin with blacklist info
+        if pin == 'blacklist':
             bl_reason = f"<br/>Reason: {d['Blacklist Reason']}" if d['Blacklist Reason'] else ''
             desc = (
                 f"{icao} <br/><b>BLACKLISTED - T-38 operations not authorized.</b>"
@@ -350,21 +391,10 @@ def generate_kml(master_dict: dict, wb: dict, date_str: str, version: str, exp_s
             txt_lines.append(f"{icao}\tred-blacklist\t{d['Runway Length']}\t{comment_clean}")
             continue
         
-        # MODIFY: runway threshold - change 7000 to adjust minimum LDA
-        if d['Runway Length'] < 7000 or not d['Contract Gas']:
-            continue
-        
-        # MODIFY: pin color logic - blue/yellow/green assignment based on JASU availability or recent ops/whitelist
-        recently_landed = d['Recently Landed'] and not d['Issues with Recently Landed']
-        whitelisted = d['White List']
+        # Map pin string to KML style
+        style_map = {'green': styles['prev'], 'blue': styles['go'], 'yellow': styles['nogo']}
+        style = style_map[pin]
 
-        if recently_landed or whitelisted:
-            pin, style = 'green', styles['prev']    # Known good or explicitly whitelisted
-        elif d['JASU']:
-            pin, style = 'blue', styles['go']       # JASU listed, no recent ops
-        else:
-            pin, style = 'yellow', styles['nogo']   # No JASU, call FBO
-        
         # Override style for category airports (red pins)
         if "Category 1" in d['Category']:
             style = styles['cat1']
@@ -452,17 +482,11 @@ def generate_map(master_dict: dict, date_str: str, exp_str: str = "") -> Path:
     """
     m = folium.Map(location=[39.0, -98.0], zoom_start=5, tiles='OpenStreetMap')
 
-    for d in master_dict.values():
+    for d, pin in classify_airports(master_dict):
         icao = d['ICAO Name']
 
-        # Always skip OCONUS and non-CONUS identifiers
-        if d['OCONUS']:
-            continue
-        if not (isinstance(icao, str) and icao.startswith('K') and len(icao) == 4):
-            continue
-
-        # Blacklisted airports: red marker with blacklist info (no runway/fuel filter)
-        if d['Black List']:
+        # Blacklisted airports: red marker with blacklist info
+        if pin == 'blacklist':
             comment = str(d['Comments']).replace('<br/>', ' ').replace('nan', '').strip()
             popup_html = (
                 f"<b>{icao}</b><br/>"
@@ -485,22 +509,7 @@ def generate_map(master_dict: dict, date_str: str, exp_str: str = "") -> Path:
             ).add_to(m)
             continue
 
-        # Apply standard filters for non-blacklisted airports
-        if d['Runway Length'] < 7000 or not d['Contract Gas']:
-            continue
-
-        # Pin color logic (mirrors KML)
-        recently_landed = d['Recently Landed'] and not d['Issues with Recently Landed']
-        whitelisted = d['White List']
-
-        if recently_landed or whitelisted:
-            pin = 'green'
-        elif d['JASU']:
-            pin = 'blue'
-        else:
-            pin = 'yellow'
-
-        # Category overrides
+        # Category overrides for folium icon
         if 'Category 1' in d['Category']:
             color = 'red'
             icon = 'ban-sign'  # prohibited

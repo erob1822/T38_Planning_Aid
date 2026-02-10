@@ -402,21 +402,17 @@ def deploy_nasr(source):
     dest_dir.mkdir(parents=True, exist_ok=True)
     
     # Find files in the cache structure (they might be in nested folders)
+    # Glob ONCE and build a name→path lookup for O(1) access
     search_root = source.download_subdir / "extracted"
+    all_csvs = list(search_root.rglob("*.csv"))
+    csv_by_name: dict[str, list[Path]] = {}
+    for f in all_csvs:
+        csv_by_name.setdefault(f.name.lower(), []).append(f)
+    logger.debug(f"[NASR] Found {len(all_csvs)} CSVs in extracted tree")
+
     for req_file in required_files:
-        # Case-insensitive exact match (not startswith to avoid APT_RWY matching APT_RWY_END)
-        all_csvs = list(search_root.rglob("*.csv"))
-        logger.debug(f"[NASR] All found CSVs: {[str(f) for f in all_csvs]}")
-        matches = [f for f in all_csvs if f.name.lower() == req_file.lower()]
+        matches = csv_by_name.get(req_file.lower(), [])
         logger.debug(f"[NASR] Matches for {req_file}: {[str(f) for f in matches]}")
-        if not matches:
-            # Try searching one more level deep (CSV_Data/*/)
-            csv_data_dir = next(search_root.rglob("CSV_Data"), None)
-            if csv_data_dir:
-                all_csvs = list(csv_data_dir.rglob("*.csv"))
-                logger.debug(f"[NASR] All found CSVs in CSV_Data: {[str(f) for f in all_csvs]}")
-                matches = [f for f in all_csvs if f.name.lower() == req_file.lower()]
-                logger.debug(f"[NASR] Matches for {req_file} in CSV_Data: {[str(f) for f in matches]}")
         if matches:
             src = max(matches, key=lambda f: f.stat().st_mtime)
             dst = dest_dir / req_file
@@ -691,6 +687,7 @@ def update_wb_list(cfg):
         raise  # Let callers detect the file-lock and offer a retry
     except Exception as e:
         logger.error(f"Failed to update wb_list.xlsx: {e}")
+        raise  # Let callers detect the failure
 
 # ---------------------------------------------------------------------------
 # MAIN ENTRY POINT
