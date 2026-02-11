@@ -1,11 +1,25 @@
-"""
-T38_PlanAid_GUI.py - GUI Version of T-38 PlanAid (User-Friendly)
 
-Replaces the command-window interface with a clean tkinter GUI showing
-progress bars for each data-acquisition step.
+"""
+T38_PlanAid_GUI.py - Graphical User Interface for T-38 PlanAid
+
+This script provides a user-friendly GUI for the T-38 Planning Aid application.
+It replaces the old command-line interface with a windowed application that guides users
+through each step of the data acquisition and KML/map generation process. The GUI displays
+progress bars, status messages, and provides interactive popups for map legends and credits.
+
+Key features:
+- Step-by-step progress tracking for all data sources (flights, comments, fuel, etc.)
+- Visual feedback for each phase (downloading, extracting, deploying, etc.)
+- Automatic handling of file locks and retry logic for Excel files
+- Popups for map legend and project credits
+- Designed for users who may not be familiar with the underlying code or command-line tools
 """
 
 # Standard library imports
+###############################################################
+# These modules provide core functionality for threading, file
+# operations, GUI creation, and more. Most are built into Python.
+###############################################################
 import shutil
 import sys
 import threading
@@ -22,6 +36,8 @@ import queue
 import traceback
 
 # Pillow is optional — used to render the RPL logo inside the window.
+# If Pillow is installed, we use it to display images in the GUI (e.g., logos).
+# If not, the GUI still works, but without image support.
 # The .ico file is always set as the window icon via tkinter natively.
 try:
     from PIL import Image, ImageTk
@@ -31,6 +47,8 @@ except ImportError:
 
 # Heavy modules (Data_Acquisition, KML_Generator) are lazy-loaded
 # in the worker thread so the GUI window appears instantly.
+# These modules do the heavy lifting for data download and KML/map generation.
+# We import them only when needed, so the GUI appears quickly for the user.
 Data_Acquisition = None
 KML_Generator = None
 
@@ -38,13 +56,21 @@ KML_Generator = None
 # ─────────────────────────────────────────────────────────────────────
 #  tqdm shim — intercepts Data_Acquisition's tqdm calls so the GUI
 #  can show real byte-level / iteration-level progress.
+# The following class and variables allow us to intercept progress updates
+# from the data acquisition process and display them in the GUI, instead of
+# the console.
 # ─────────────────────────────────────────────────────────────────────
 _progress_callback = None        # set by the worker thread before each source
 _progress_pct_base = 0.0         # where the download phase starts  (e.g. 0.20)
 _progress_pct_span = 0.0         # how much of the bar the download fills (e.g. 0.55)
 
 class _GUIProgressBar:
-    """Drop-in replacement for tqdm that forwards progress to the GUI."""
+    """
+    Drop-in replacement for tqdm that forwards progress to the GUI.
+    This class mimics the tqdm progress bar used in the console version,
+    but instead, it sends progress updates to the GUI so users can see
+    real-time feedback for downloads and processing steps.
+    """
     def __init__(self, iterable=None, *, total=None, **kwargs):
         self.iterable = iterable
         self.total = total or 0
@@ -77,11 +103,12 @@ class _GUIProgressBar:
     def close(self): pass
 
 def _lazy_import_heavy_modules():
-    """Import heavy third-party modules in the worker thread, not at startup.
-
-    Deferring pandas / fitz / folium / requests imports lets the GUI window
-    appear in < 1 second instead of waiting 10-30 s for module loading
-    (especially noticeable in the PyInstaller --onedir bundle).
+    """
+    Import heavy third-party modules in the worker thread, not at startup.
+    This ensures the GUI window appears almost instantly, even if the
+    underlying modules (like pandas, fitz, folium, requests) take a long
+    time to load. This is especially important for users running the
+    application as a bundled executable.
     """
     global Data_Acquisition, KML_Generator
     import Data_Acquisition as _DA
@@ -94,9 +121,13 @@ def _lazy_import_heavy_modules():
 warnings.filterwarnings("ignore")
 
 # --- Logging Setup (file-only, no console spam) ---
+# All log messages are written to a file in the output folder.
+# This avoids cluttering the user's screen with technical details,
+# but still provides a way to diagnose problems if needed.
 import logging
 
 def setup_logging(output_folder):
+        # Set up logging to a file in the output folder. No console output.
     root_logger = logging.getLogger()
     root_logger.setLevel(logging.INFO)
     log_filepath = output_folder / 'logfile.log'
@@ -111,7 +142,8 @@ def setup_logging(output_folder):
     root_logger.addHandler(file_handler)
     return logging.getLogger(__name__)
 
-# Get the directory where the exe/script is located
+# This logic ensures the application can find its resources whether
+# it's running as a standalone executable or as a Python script.
 if getattr(sys, 'frozen', False):
     APP_DIR = Path(sys.executable).parent
     BUNDLE_DIR = Path(sys._MEIPASS)          # PyInstaller temp extraction folder
@@ -122,7 +154,12 @@ else:
 
 @dataclass
 class AppConfig:
-    """Configuration for T-38 PlanAid application."""
+    """
+    Configuration for T-38 PlanAid application.
+    Holds all paths, URLs, and settings needed throughout the app.
+    This makes it easy to update configuration in one place and
+    ensures consistency across the codebase.
+    """
     version: ClassVar[str] = 'Version 3.0'
     aod_flights_api: ClassVar[str] = 'https://ndjsammweb.ndc.nasa.gov/Flightmetrics/api/cbdata/t38airports'
     aod_comments_url: ClassVar[str] = 'https://docs.google.com/spreadsheets/d/1AZypD2UHW65op0CSiMAlxwdjPq71B6LNIKk4n0crovI/export?format=csv&gid=0'
@@ -141,7 +178,7 @@ class AppConfig:
 
 
 # ─────────────────────────────────────────────────────────────────────
-#  COLOR PALETTE & STYLING  (NASA / military feel)
+#  COLOR PALETTE & STYLING 
 # ─────────────────────────────────────────────────────────────────────
 BG           = "#0B1426"     # deep navy background
 BG_CARD      = "#111E36"     # slightly lighter card panels
@@ -158,7 +195,7 @@ FONT_SMALL   = ("Segoe UI", 9)
 
 
 # ─────────────────────────────────────────────────────────────────────
-#  FRIENDLY STEP LABELS  (pilot-facing — no jargon)
+# These labels are shown to the user for each step
 # ─────────────────────────────────────────────────────────────────────
 STEP_LABELS = {
     "nasr":     "Airport & Runway Data",
@@ -179,54 +216,71 @@ STEP_ORDER = ["flights", "comments", "fuel", "nasr", "dcs", "wb_list", "kml", "m
 #  GUI APPLICATION
 # ─────────────────────────────────────────────────────────────────────
 class PlanAidGUI:
-    """Classy, minimal GUI for T-38 PlanAid."""
+    """
+    Main GUI class for T-38 PlanAid.
+
+    """
 
     def __init__(self):
+        ###############################################################
+        # GUI Initialization
+        # This section sets up the main window, loads images, builds
+        # the layout, and prepares the application for user interaction.
+        ###############################################################
+        # Create the main application window and set its properties
         self.root = tk.Tk()
         self.root.title("T-38 Planning Aid")
         self.root.configure(bg=BG)
         self.root.resizable(False, False)
 
-        # Window icon
+        # Set the window icon if available
         ico_path = BUNDLE_DIR / "RPLLogo.ico"
         if ico_path.exists():
             self.root.iconbitmap(str(ico_path))
 
-        # Center on screen
+
+        # Center the window on the user's screen
         self.win_w, win_h = 740, 620
         sx = (self.root.winfo_screenwidth() - self.win_w) // 2
         sy = (self.root.winfo_screenheight() - win_h) // 2
         self.root.geometry(f"{self.win_w}x{win_h}+{sx}+{sy}")
 
-        # Message queue for thread-safe GUI updates
+        # Create a thread-safe queue for communication between worker threads and the GUI
         self.msg_queue: queue.Queue = queue.Queue()
 
-        # Track widgets for each step
+
+        # Dictionaries to hold references to progress bars, labels, and status indicators for each step
         self.bars: dict[str, ttk.Progressbar] = {}
         self.labels: dict[str, tk.Label] = {}
         self.status_labels: dict[str, tk.Label] = {}
         self.pct_labels: dict[str, tk.Label] = {}
 
-        # Retry state — stored so _retry_from_wb_list can re-run later phases
+        # Internal state for retry logic and configuration
         self._cfg = None
         self._logger = None
         self._retry_btn_frame: tk.Frame | None = None
 
-        # Pre-load popup images once so _show_legend/_show_credits skip disk I/O
+        # Pre-load images for popups to avoid disk I/O during user interaction
         self._popup_t38_img = None   # 40px T-38 banner for popups
         self._popup_logo_img = None  # 40px RPL logo for popups
         self._load_popup_images()
 
+        # Build the visual style and layout of the GUI
         self._build_styles()
         self._build_ui()
 
-        # Start processing on the next event-loop tick
+        # Start the data processing pipeline after the GUI is ready
         self.root.after(300, self._start_work)
-        # Poll the queue
+        # Begin polling the message queue for updates from worker threads
         self.root.after(50, self._poll_queue)
 
     # ── Theming ──────────────────────────────────────────────────────
     def _build_styles(self):
+        """
+        Set up the color scheme and style for all GUI widgets, including
+        progress bars and buttons, to ensure a consistent and visually
+        appealing user experience.
+        """
         style = ttk.Style(self.root)
         style.theme_use("clam")
 
@@ -256,7 +310,11 @@ class PlanAidGUI:
         )
 
     def _load_popup_images(self):
-        """Pre-load 40 px images used by _show_legend and _show_credits."""
+        """
+        Load and resize images for use in popup dialogs (legend, credits).
+        This is done once at startup to avoid delays when the user opens a popup.
+        """
+
         if not HAS_PIL:
             return
         banner_path = BUNDLE_DIR / "NASAT38s.png"
@@ -279,6 +337,11 @@ class PlanAidGUI:
 
     # ── Layout ───────────────────────────────────────────────────────
     def _build_ui(self):
+        """
+        Construct the main layout of the application window, including
+        header, progress bars for each step, status area, and action buttons.
+        Each section is carefully organized for clarity and ease of use.
+        """
         # ── Header row (T-38 left │ centered title │ RPL logo right) ─
         header = tk.Frame(self.root, bg=BG)
         header.pack(fill="x", padx=24, pady=(20, 4))
@@ -437,11 +500,21 @@ class PlanAidGUI:
 
     # ── Thread-safe messaging ────────────────────────────────────────
     def _send(self, msg_type: str, **kwargs):
-        """Put a message on the queue for the GUI thread to process."""
+        """
+        Place a message in the queue for the GUI thread to process.
+        This allows background threads to safely update the GUI without
+        causing thread-safety issues or crashes.
+        """
+
         self.msg_queue.put((msg_type, kwargs))
 
     def _poll_queue(self):
-        """Drain the message queue and apply GUI updates."""
+        """
+        Continuously check the message queue for updates from worker threads.
+        Applies progress updates, error messages, and status changes to the GUI.
+        This keeps the interface responsive and up-to-date for the user.
+        """
+
         try:
             while True:
                 msg_type, kw = self.msg_queue.get_nowait()
@@ -471,6 +544,10 @@ class PlanAidGUI:
 
     # ── Step state callbacks ─────────────────────────────────────────
     def _on_step_progress(self, step, pct, phase=""):
+        """
+        Update the progress bar and status label for a given step.
+        This provides real-time feedback to the user about what is happening.
+        """
         bar = self.bars[step]
         bar.configure(value=min(pct, 99))   # 100 only on "done"
         self.pct_labels[step].configure(text=f"{pct}%", fg=ACCENT)
@@ -478,6 +555,10 @@ class PlanAidGUI:
             self.status_labels[step].configure(text=phase, fg=ACCENT)
 
     def _on_step_done(self, step, skipped=False):
+        """
+        Mark a step as complete in the GUI, updating the bar and label.
+        Indicates to the user that this phase has finished successfully.
+        """
         bar = self.bars[step]
         bar.configure(style="Done.Horizontal.TProgressbar", value=100)
         txt = "Cached ✓" if skipped else "Complete ✓"
@@ -485,6 +566,10 @@ class PlanAidGUI:
         self.status_labels[step].configure(text=txt, fg=ACCENT_DONE)
 
     def _on_step_error(self, step, detail=""):
+        """
+        Mark a step as failed in the GUI, showing an error color and message.
+        This helps the user quickly identify which part of the process needs attention.
+        """
         bar = self.bars[step]
         bar.configure(style="Err.Horizontal.TProgressbar", value=100)
         self.pct_labels[step].configure(text="—", fg=ACCENT_ERR)
@@ -492,7 +577,12 @@ class PlanAidGUI:
 
     # ── Dedicated parsing sub-bar callbacks ──────────────────────────
     def _on_parse_show(self):
-        """Reveal the parsing sub-row beneath the DCS row."""
+        """
+        Display the parsing progress bar for the DCS step, which involves
+        processing multiple PDF files. This gives the user detailed feedback
+        during a complex phase.
+        """
+
         if not self._parse_row_visible:
             # Insert right after the DCS row by packing in order
             # pack_after isn't available, but we stored dcs row ref.
@@ -507,19 +597,28 @@ class PlanAidGUI:
             self._parse_row_visible = True
 
     def _on_parse_progress(self, current, total, name=""):
-        """Update the parsing sub-bar with per-PDF progress."""
+        """
+        Update the parsing sub-bar with the current progress through PDF files.
+        Shows the user exactly which file is being processed and how many remain.
+        """
         pct = int((current / total) * 100) if total else 0
         self.parse_bar.configure(value=min(pct, 99))
         self.parse_pct.configure(text=f"{pct}%", fg=ACCENT)
         self.parse_status.configure(text=f"{current}/{total}  {name}", fg=ACCENT)
 
     def _on_parse_done(self):
-        """Mark the parsing sub-bar as complete."""
+        """
+        Mark the parsing sub-bar as complete, indicating all files have been processed.
+        """
         self.parse_bar.configure(style="Done.Horizontal.TProgressbar", value=100)
         self.parse_pct.configure(text="100%", fg=ACCENT_DONE)
         self.parse_status.configure(text="Complete ✓", fg=ACCENT_DONE)
 
     def _on_all_done(self, kml_path=None, map_path=None):
+        """
+        Called when all steps are finished. Updates the status area, opens the
+        generated map in the browser, and provides buttons for further actions.
+        """
         parts = ["All done!"]
         if kml_path:
             parts.append(f"KML → {Path(kml_path).name}")
@@ -552,13 +651,20 @@ class PlanAidGUI:
             ).pack(side="left")
 
     def _on_fatal(self, detail):
+        """
+        Display a fatal error message in the GUI, instructing the user to check the log file.
+        """
         self.overall_label.configure(
             text=f"Error: {detail}  — check logfile.log for details.",
             fg=ACCENT_ERR,
         )
 
     def _on_wb_locked(self, detail=""):
-        """Handle wb_list.xlsx being locked (e.g. open in Excel)."""
+        """
+        Handle the case where the Excel workbook is open in another program.
+        Prompts the user to close the file and try again, preventing data corruption.
+        """
+
         # Mark wb_list and downstream steps as errored
         for step in ("wb_list", "kml", "map"):
             if self.bars[step].cget("value") < 100:
@@ -591,7 +697,10 @@ class PlanAidGUI:
         ).pack(side="left")
 
     def _retry_from_wb_list(self):
-        """Re-run wb_list update + KML/map generation after the user closes the file."""
+        """
+        Retry the wb_list update and KML/map generation after the user closes the locked file.
+        Resets the relevant progress bars and restarts the worker thread for these steps.
+        """
         # Clean up the retry button
         if self._retry_btn_frame is not None:
             self._retry_btn_frame.destroy()
@@ -613,7 +722,11 @@ class PlanAidGUI:
         t.start()
 
     def _run_wb_and_kml(self):
-        """Worker thread: retry just the wb_list update and KML/map build."""
+        """
+        Worker thread: re-run the wb_list update and KML/map build after a retry.
+        This allows the user to recover from file lock errors without restarting the app.
+        """
+
         cfg = self._cfg
         logger = self._logger
         if cfg is None or logger is None:
@@ -658,7 +771,10 @@ class PlanAidGUI:
 
     # ── Map Legend popup ──────────────────────────────────────────────
     def _show_legend(self):
-        """Open a styled popup showing the KML / map pin colour legend."""
+        """
+        Open a popup window showing the map legend, including pin color meanings
+        and airport inclusion criteria. Helps users interpret the generated map.
+        """
         win = tk.Toplevel(self.root)
         win.title("Map Legend — T-38 Planning Aid")
         win.configure(bg=BG)
@@ -919,10 +1035,19 @@ class PlanAidGUI:
 
     # ── Background worker ────────────────────────────────────────────
     def _start_work(self):
+        """
+        Start the background thread that runs the main data processing pipeline.
+        This keeps the GUI responsive while heavy work is done in the background.
+        """
         t = threading.Thread(target=self._run_pipeline, daemon=True)
         t.start()
 
     def _run_pipeline(self):
+        """
+        Main worker function that runs the entire data acquisition and KML/map generation pipeline.
+        Handles all steps in order, updating the GUI as each phase progresses.
+        Includes error handling and retry logic for a robust user experience.
+        """
         # Lazy-load heavy modules (pandas, fitz, folium, etc.)
         # so the GUI window appears immediately on startup.
         self._send("overall_msg", text="Loading modules…")
@@ -1047,7 +1172,12 @@ class PlanAidGUI:
 
     # ── Per-source progress orchestration ────────────────────────────
     def _run_source_with_progress(self, name, source, logger):
-        """Run a single DataSource with phased progress updates."""
+        """
+        Run a single data source step (e.g., flights, comments, fuel, nasr, dcs),
+        updating the GUI with progress for each phase (checking, downloading, deploying).
+        Handles both cached and fresh downloads, and manages sub-progress for complex steps.
+        """
+
         global _progress_callback, _progress_pct_base, _progress_pct_span
 
         # Phase 1: Check cycle (0 → 10%)
@@ -1146,7 +1276,11 @@ class PlanAidGUI:
 
     # ── KML / map progress orchestration ─────────────────────────────
     def _run_kml_with_progress(self, cfg, logger):
-        """Run KML + map generation with progress reporting."""
+        """
+        Run the KML and map generation steps, providing detailed progress updates to the GUI.
+        Handles data loading, master dictionary creation, Excel export, and final file generation.
+        """
+
         global DATA, OUTPUT
 
         # Point KML_Generator at the right folders
@@ -1193,11 +1327,20 @@ class PlanAidGUI:
 
     # ── Run ──────────────────────────────────────────────────────────
     def run(self):
+        """
+        Start the Tkinter main event loop, displaying the GUI and waiting for user interaction.
+        """
         self.root.mainloop()
 
 
 # ─────────────────────────────────────────────────────────────────────
 if __name__ == "__main__":
+    ###############################################################
+    # Application Entry Point
+    # This section ensures the app runs correctly whether started
+    # as a script or as a bundled executable. It creates the GUI
+    # and starts the main event loop.
+    ###############################################################
     import multiprocessing
     multiprocessing.freeze_support()   # required for PyInstaller
     app = PlanAidGUI()
